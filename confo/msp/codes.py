@@ -1,7 +1,17 @@
-from enum import Enum
+from enum import IntEnum
+
+# class Comparing:
+#     def __gt__(self, other):
+#         return self.value > other
+
+#     def __lt__(self, other):
+#         return self.value < other
+
+#     def __int__(self):
+#         return self.value
 
 
-class MSP(Enum):
+class MSP(IntEnum):
     API_VERSION = 1
     FC_VARIANT = 2
     FC_VERSION = 3
@@ -44,10 +54,10 @@ class MSP(Enum):
     SET_ARMING_CONFIG = 62
     RX_MAP = 64
     SET_RX_MAP = 65
-    BF_CONFIG = 66  # DEPRECATE
-    SET_BF_CONFIG = 67  # DEPRECATE
+    BF_CONFIG = 66  # deprecated
+    SET_BF_CONFIG = 67  # deprecated
     SET_REBOOT = 68
-    BF_BUILD_INFO = 69  # Not use
+    BF_BUILD_INFO = 69  # deprecated
     DATAFLASH_SUMMARY = 70
     DATAFLASH_READ = 71
     DATAFLASH_ERASE = 72
@@ -76,10 +86,10 @@ class MSP(Enum):
     SET_PID_ADVANCED = 95
     SENSOR_CONFIG = 96
     SET_SENSOR_CONFIG = 97
-    SPECIAL_PARAMETERS = 98  # DEPRECATE
+    SPECIAL_PARAMETERS = 98  # deprecated
     ARMING_DISABLE = 99
-    SET_SPECIAL_PARAMETERS = 99  # DEPRECATE
-    IDENT = 100  # DEPRECTE
+    SET_SPECIAL_PARAMETERS = 99  # deprecated
+    IDENT = 100  # deprecated
     STATUS = 101
     RAW_IMU = 102
     SERVO = 103
@@ -92,11 +102,11 @@ class MSP(Enum):
     ANALOG = 110
     RC_TUNING = 111
     PID = 112
-    BOX = 113  # DEPRECATED
-    MISC = (114,)  # DEPRECATE
+    BOX = 113  # deprecatedD
+    MISC = 114  # deprecated
     BOXNAMES = 116
     PIDNAMES = 117
-    WP = (118,)  # Not use
+    WP = 118  # deprecated
     BOXIDS = 119
     SERVO_CONFIGURATIONS = 120
     MOTOR_3D_CONFIG = 124
@@ -127,17 +137,17 @@ class MSP(Enum):
     SET_BEEPER_CONFIG = 185
 
     SET_RAW_RC = 200
-    SET_RAW_GPS = (201,)  # Not use
+    SET_RAW_GPS = 201  # deprecated
     SET_PID = 202
-    SET_BOX = 203  # DEPRECATE
+    SET_BOX = 203  # deprecated
     SET_RC_TUNING = 204
     ACC_CALIBRATION = 205
     MAG_CALIBRATION = 206
-    SET_MISC = (207,)  # DEPRECATE
+    SET_MISC = 207  # deprecated
     RESET_CONF = 208
-    SET_WP = (209,)  # Not use
+    SET_WP = 209  # deprecated
     SELECT_SETTING = 210
-    SET_HEADING = (211,)  # Not use
+    SET_HEADING = 211  # deprecated
     SET_SERVO_CONFIGURATION = 212
     SET_MOTOR = 214
     SET_MOTOR_3D_CONFIG = 217
@@ -149,25 +159,26 @@ class MSP(Enum):
     SET_GPS_CONFIG = 223
     SET_COMPASS_CONFIG = 224
     SET_GPS_RESCUE = 225
+    # SET_CHANNEL_FORWARDING =  # TODO: find
 
     MODE_RANGES_EXTRA = 238
     SET_ACC_TRIM = 239
     ACC_TRIM = 240
     SERVO_MIX_RULES = 241
-    SET_SERVO_MIX_RULE = (242,)  # Not use
-    SET_4WAY_IF = (245,)  # Not use
+    SET_SERVO_MIX_RULE = 242  # deprecated
+    SET_4WAY_IF = 245  # deprecated
     SET_RTC = 246
-    RTC = (247,)  # Not use
-    SET_BOARD_INFO = (248,)  # Not use
-    SET_SIGNATURE = (249,)  # Not use
+    RTC = 247  # deprecated
+    SET_BOARD_INFO = 248  # deprecated
+    SET_SIGNATURE = 249  # deprecated
 
     EEPROM_WRITE = 250
-    DEBUGMSG = (253,)  # Not use
+    DEBUGMSG = 253  # deprecated
     DEBUG = 254
 
 
 # INAV specific codes
-class MSPV2(Enum):
+class MSPV2(IntEnum):
     SETTING = 0x1003
     SET_SETTING = 0x1004
 

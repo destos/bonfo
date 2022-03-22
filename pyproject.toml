@@ -24,9 +24,11 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.2,<4.0"
+python = ">=3.8,<4.0"
 click = "8.0.1"
-pyserial-asyncio = "^0.6"
+pyserial = "^3.5"
+dataclass-wizard = "^0.22.0"
+construct = "^2.10.67"
 
 black  = { version = "^21.5b2", optional = true}
 isort  = { version = "^5.8.0", optional = true}
@@ -35,6 +37,7 @@ flake8-docstrings = { version = "^1.6.0", optional = true }
 mypy = {version = "^0.900", optional = true}
 pytest  = { version = "^6.2.4", optional = true}
 pytest-cov  = { version = "^2.12.0", optional = true}
+pytest-watch = {version = "^4.2.0", optional = true}
 tox  = { version = "^3.20.1", optional = true}
 virtualenv  = { version = "^20.2.2", optional = true}
 pip  = { version = "^20.3.1", optional = true}
@@ -48,6 +51,8 @@ mkdocs-autorefs = {version = "^0.2.1", optional = true}
 pre-commit = {version = "^2.12.0", optional = true}
 toml = {version = "^0.10.2", optional = true}
 bump2version = {version = "^1.0.1", optional = true}
+autoflake8 = {version = "^0.3.1", optional = true}
+construct-typing = {version = "^0.5.2", optional = true}
 
 [tool.poetry.extras]
 test = [
@@ -58,9 +63,20 @@ test = [
     "flake8",
     "flake8-docstrings",
     "pytest-cov"
-    ]
+]
 
-dev = ["tox", "pre-commit", "virtualenv", "pip", "twine", "toml", "bump2version"]
+dev = [
+    "tox",
+    "pre-commit",
+    "virtualenv",
+    "pip",
+    "twine",
+    "toml",
+    "bump2version",
+    "pytest-watch",
+    "autoflake8",
+    "construct-typing",
+ ]
 
 doc = [
     "mkdocs",
@@ -102,6 +118,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
 skip_gitignore = true
+remove_all_unused_imports = true
 # you can skip files as below
 #skip_glob = docs/conf.py
 
