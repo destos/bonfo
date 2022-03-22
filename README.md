@@ -7,8 +7,7 @@
 [![codecov](https://codecov.io/gh/destos/confo/branch/main/graphs/badge.svg)](https://codecov.io/github/destos/confo)
 
 
-
-Confo MSP config parsing, validation and packager
+Confo MSP config parsing, validation and packager with a focus on Betaflight
 
 
 * Documentation: <https://destos.github.io/confo>
@@ -19,7 +18,8 @@ Confo MSP config parsing, validation and packager
 
 ## Features
 
-* TODO
+* TODO: test against a local build of Betaflight
+* TODO: track against Betaflight updates and run tests on new releases + beta
 
 ## Credits
 
