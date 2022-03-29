@@ -1,13 +1,14 @@
 import logging
-import serial
 import time
-from threading import Lock
+from threading import BoundedSemaphore
+
+import serial
 
 from confo.msp.codes import MSP
 from confo.msp.structs import Message
+from confo.msp.structs.message import out_message_builder
 
 from .state import Config, RcTuning, RxConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,8 @@ class Board:
         self.rc_tuning = RcTuning()
 
         self.serial_trials = trials
-        self.serial_write_lock = Lock()
-        self.serial_read_lock = Lock()
+        self.serial_write_lock = BoundedSemaphore(value=1)
+        self.serial_read_lock = BoundedSemaphore(value=1)
 
         self.init_serial(port, baudrate=baudrate)
 
@@ -33,11 +34,11 @@ class Board:
             bytesize=serial.EIGHTBITS,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
-            timeout=1,
+            timeout=0.1,
             xonxoff=False,
             rtscts=False,
             dsrdtr=False,
-            writeTimeout=1,
+            writeTimeout=0,
         )
         logger.debug(self.serial)
 
@@ -51,7 +52,8 @@ class Board:
             return False
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if not self.serial.closed:
+        if self.serial.is_open:
+            self.serial.readlines
             self.serial.close()
 
     def connect(self, trials=100, delay=0.5):
@@ -74,9 +76,9 @@ class Board:
 
         return False
 
+    def send_msg(self, code: MSP, data=None, blocking=True, timeout=-1):
+        buff = out_message_builder(code, fields=data)
 
-    def send_msg(self, code: MSP, data=dict(), blocking=True, timeout=-1):
-        buff = Message.build(dict(header=dict(frame_id=code, message_type="OUT"), fields=data))
         if self.serial_write_lock.acquire(blocking, timeout):
             try:
                 sent_bytes = self.serial.write(buff)
@@ -90,4 +92,10 @@ class Board:
                 return sent_bytes
 
     def receive_msg(self):
-        return Message.parse(self.serial.readline())
+        with self.serial_read_lock:
+            # TODO: do this mo-better
+            buff = self.serial.readline()
+            logger.debug("RAW message received: {}".format(buff))
+            if len(buff) > 0:
+                return Message.parse(buff)
+            return None

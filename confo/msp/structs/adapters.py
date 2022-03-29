@@ -1,10 +1,6 @@
 from math import floor
 
-from construct import (
-    Adapter,
-    Byte,
-    Int8ub,
-)
+from construct import Adapter, Byte, Int8ub
 
 from confo.msp.codes import MSP
 

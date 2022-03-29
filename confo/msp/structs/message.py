@@ -1,36 +1,35 @@
 from copy import copy
+import logging
 from functools import reduce
 from operator import xor
+
 from construct import (
     Byte,
-    Bytes,
     Checksum,
+    ChecksumError,
     Computed,
     Const,
+    Debugger,
     Default,
     Enum,
-    Flag,
+    FixedSized,
+    FuncPath,
     Hex,
-    If,
-    IfThenElse,
-    Int16ub,
     Mapping,
     Optional,
-    Pointer,
-    Probe,
     RawCopy,
     Rebuild,
     Struct,
-    Int8ub,
     Switch,
-    Tell,
-    len_,
     this,
 )
 
 from confo.msp.codes import MSP
 from confo.msp.structs.adapters import MessageType
+
 from . import config as structs
+
+logger = logging.getLogger(__name__)
 
 # Do this map differently + automate or just register the structs?
 # how to handle returns/response from board?
@@ -47,108 +46,71 @@ function_map = {
     MSP.STATUS_EX: structs.StatusEx,
     MSP.RX_CONFIG: structs.RxConfig,
     MSP.RC_TUNING: structs.RcTuning,
+    MSP.RAW_IMU: structs.RawIMU,
 }
 
 
 message_id_mapping = {m.value: m for m in MSP}
 
 
-# def do_v1_crc(data):
-#     # first byte is length
-#     data = copy(data)
-#     checksum = data[0]
-#     for byte in data[1:]:
-#         checksum ^= byte
-#     return checksum
+def zero_none_len(data):
+    if data is None:
+        return 0
+    return len(data)
+
+
+zero_none_len_ = FuncPath(zero_none_len)
+
+
+class LenientChecksum(Checksum):
+    def _parse(self, stream, context, path):
+        try:
+            return super()._parse(stream, context, path)
+        except ChecksumError as e:
+            logger.error("CRC failed {}", exc_info=e)
+            return self.checksumfield._parsereport(stream, context, path)
 
 
 # fmt: off
 # MSP v1 message struct
 Message = Struct(
     "signature" / Const(b"$"),
-    # "version" / Const(b"M")
-    "version" / Default(
-        Enum(Byte,
-            V1 = ord("M"),
-            V2 = ord("X"),
-        ), "V1"),
+    "version" / Const(b"M"),
+    # Don't need to support v2 at this moment
+    # "version" / Default(
+    #     Enum(Byte,
+    #         V1 = ord("M"),
+    #         V2 = ord("X"),
+    #     ), "V1"),
     "message_type" / Default(
         Enum(Byte,
             IN = ord(">"),
             OUT = ord("<"),
             ERR = ord("!"),
         ), "IN"),
-    "_is_out" / Computed(this.message_type == "OUT"),
-    "_start" / Tell,
-    # How to have this computed?
-    # "data_length" / IfThenElse(
-    #     this._is_out,
-    #     Rebuild(Byte, len_(this._packet)),
-    #     Byte
-    # ),
-    "data_length" / Rebuild(Byte, len_(this._packet)),
-    "frame_id" / Mapping(MessageType, message_id_mapping),
-    # "message_id" / Enum(Byte, MSP)
-    # "fields" / ApiVersion
-    "fields" / Switch(this.frame_id.value, function_map),
-    "_end" / Tell,
-    "_packet" / Pointer(this._start, Bytes(this._end - this._start)),
-
-    # "crc" / Checksum(Byte, lambda data: reduce(xor, data, 0), this._packet.data)
-    "checksum" / Hex(Checksum(
+    # "_is_out" / Computed(this.message_type == "OUT"),
+    "packet" / RawCopy(Struct(
+        "data_length" / Rebuild(Byte, zero_none_len_(this.fields)),
+        "frame_id" / Mapping(MessageType, message_id_mapping),
+        "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, function_map))),
+    )),
+    "crc" / Hex(Checksum(
         Byte,
-        # do_v1_crc,
         lambda data: reduce(xor, data, 0),
-        this._packet
-        # lambda data: do_v1_crc(data), this._packet
-        # Computed(this.data_length)
+        this.packet.data
     ))
-    # "checksum" / Hex(Checksum(
-    #     Byte,
-    #     # do_v1_crc,
-    #     lambda data: reduce(xor, data, 0),
-    #     this._packet
-    #     # lambda data: do_v1_crc(data), this._packet
-    #     # Computed(this.data_length)
-    # ))
-    # "crc" / Hex(Checksum(Int8ub, lambda data: novatel_binary_crc(data), this.fields.data))
 )
 # fmt: on
 
-# TestMessage = Struct(
-#     "wat" / Const(b"!"),
-#     "length" / Rebuild(Byte, len_(this.items)),
-#     "start" / Tell,
-#     "items" / Struct(
-#         "waka" / Flag,
-#         "item" / Int16ub,
-#     ),
-#     Probe(lookahead=32),
-#     "checksum" / Pointer(
-#         this.start,
-#         Checksum(Byte, lambda data: reduce(xor, data, 0), this.items)
-#         # lambda data: do_v1_crc(data), this._packet
-#         # Computed(this.data_length)
-#     ),
-# )
+
+def message_builder(message_type: str, code: MSP, fields=None, debug=False):
+    Msg = Debugger(Message) if debug else Message
+    return Msg.build(dict(message_type=message_type, packet=dict(value=dict(frame_id=code, fields=fields))))
 
 
-# TestMessage = Struct(
-#     "header" / Const(b"4"),
-#     "bits" / RawCopy(
-#         Default(Int16ub, 0),
-#     ),
-#     "crc" / Checksum(Byte, lambda data: reduce(xor, data, 0), this.bits.data)
-# )
+def out_message_builder(code: MSP, fields=None, debug=False):
+    return message_builder("OUT", code, fields, debug=debug)
 
-# DIS WORKS YO
-TestMessage = Struct(
-    "header" / Const(b"4"),
-    "_start" / Tell,
-    # This may be able to just use start_env
-    "data_length" / Rebuild(Byte, len_(this._packet)),
-    "bits" / Default(Int16ub, 0),
-    "_end" / Tell,
-    "_packet" / Pointer(this._start, Bytes(this._end - this._start)),
-    "crc" / Checksum(Byte, lambda data: reduce(xor, data, 0), this._packet)
-)
+
+def in_message_builder(code: MSP, fields=None, debug=False):
+    return message_builder("IN", code, fields, debug=debug)
