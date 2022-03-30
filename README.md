@@ -1,25 +1,20 @@
-# Confo MSP configuration
+# Bonfo - Betaflight configuration management
+
+[![pypi](https://img.shields.io/pypi/v/bonfo.svg)](https://pypi.org/project/bonfo/)
+[![python](https://img.shields.io/pypi/pyversions/bonfo.svg)](https://pypi.org/project/bonfo/)
+[![Build Status](https://github.com/destos/bonfo/actions/workflows/dev.yml/badge.svg)](https://github.com/destos/bonfo/actions/workflows/dev.yml)
+[![codecov](https://codecov.io/gh/destos/bonfo/branch/main/graphs/badge.svg)](https://codecov.io/github/destos/bonfo)
 
 
-[![pypi](https://img.shields.io/pypi/v/confo.svg)](https://pypi.org/project/confo/)
-[![python](https://img.shields.io/pypi/pyversions/confo.svg)](https://pypi.org/project/confo/)
-[![Build Status](https://github.com/destos/confo/actions/workflows/dev.yml/badge.svg)](https://github.com/destos/confo/actions/workflows/dev.yml)
-[![codecov](https://codecov.io/gh/destos/confo/branch/main/graphs/badge.svg)](https://codecov.io/github/destos/confo)
-
-
-Confo MSP config parsing, validation and packager with a focus on Betaflight
-
-
-* Documentation: <https://destos.github.io/confo>
-* GitHub: <https://github.com/destos/confo>
-* PyPI: <https://pypi.org/project/confo/>
+* Documentation: <https://destos.github.io/bonfo>
+* GitHub: <https://github.com/destos/bonfo>
+* PyPI: <https://pypi.org/project/bonfo/>
 * Free software: MIT
-
 
 ## Features
 
-* TODO: test against a local build of Betaflight
-* TODO: track against Betaflight updates and run tests on new releases + beta
+* Connects to Betaflight flight controllers
+* More soon ( lol )
 
 ## Credits
 

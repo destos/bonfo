@@ -1,1 +1,1 @@
-"""Unit test package for confo."""
+"""Unit test package for bonfo."""

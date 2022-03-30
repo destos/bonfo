@@ -1,7 +1,4 @@
-"""
-These data classes track and save state of the flight controller for offloading and potentially updating
-A set of configurations for a flight controller
-"""
+"""Data classes that store parsed information from a MSP message."""
 
 from dataclasses import dataclass, field
 from typing import Optional
@@ -231,7 +228,6 @@ class RcTuning(YAMLWizard):
     roll_rate_limit: int = 1998
     pitch_rate_limit: int = 1998
     yaw_rate_limit: int = 1998
-    rc_pitch_expo: int = 0
 
     def apply_struct(self, data):
         self.struct.parse(data)

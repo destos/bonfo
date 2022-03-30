@@ -1,7 +1,7 @@
-site_name: Confo MSP configuration
-site_url: https://destos.github.io/confo
-repo_url: https://github.com/destos/confo
-repo_name: destos/confo
+site_name: Bonfo configuration management
+site_url: https://destos.github.io/bonfo
+repo_url: https://github.com/destos/bonfo
+repo_name: destos/bonfo
 #strict: true
 nav:
   - Home: index.md
@@ -52,7 +52,7 @@ plugins:
       lang: en
   - mkdocstrings:
       watch:
-        - confo
+        - bonfo
 extra:
   social:
     - icon: fontawesome/brands/twitter
@@ -64,7 +64,7 @@ extra:
       link: https://github.com/waynerv/cookiecutter-pypackage
       name: Facebook
     - icon: fontawesome/brands/github
-      link: https://github.com/destos/confo
+      link: https://github.com/destos/bonfo
       name: Github
     - icon: material/email
       link: "mailto:patrick@forringer.com"

@@ -2,33 +2,33 @@
 
 ## Stable release
 
-To install Confo MSP configuration, run this command in your
+To install Bonfo configuration management, run this command in your
 terminal:
 
 ``` console
-$ pip install confo
+$ pip install bonfo
 ```
 
-This is the preferred method to install Confo MSP configuration, as it will always install the most recent stable release.
+This is the preferred method to install Bonfo configuration management, as it will always install the most recent stable release.
 
 If you don't have [pip][] installed, this [Python installation guide][]
 can guide you through the process.
 
 ## From source
 
-The source for Confo MSP configuration can be downloaded from
+The source for Bonfo configuration management can be downloaded from
 the [Github repo][].
 
 You can either clone the public repository:
 
 ``` console
-$ git clone git://github.com/destos/confo
+$ git clone git://github.com/destos/bonfo
 ```
 
 Or download the [tarball][]:
 
 ``` console
-$ curl -OJL https://github.com/destos/confo/tarball/master
+$ curl -OJL https://github.com/destos/bonfo/tarball/master
 ```
 
 Once you have a copy of the source, you can install it with:

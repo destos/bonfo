@@ -1,28 +1,32 @@
 from construct import (
     Array,
-    Byte,
     FixedSized,
     FlagsEnum,
     GreedyBytes,
-    Int16ul,
     Int8ub,
     Int16ub,
+    Int16ul,
     Int32ub,
-    Optional,
     PaddedString,
-    Probe,
     Struct,
     this,
 )
 
-from confo.msp.structs.adapters import RcFloat
+from .adapters import RawSingle, RcFloat
 
-ApiVersion = Struct("msp_protocol" / Int8ub, "api_major" / Int8ub, "api_minor" / Int8ub,)
+ApiVersion = Struct(
+    "msp_protocol" / Int8ub,
+    "api_major" / Int8ub,
+    "api_minor" / Int8ub,
+)
 
 FcVariant = Struct("name" / PaddedString(4, "utf8"))
 
-FcVersion = Struct("major" / Int8ub, "minor" / Int8ub, "patch" / Int8ub,)
-
+FcVersion = Struct(
+    "major" / Int8ub,
+    "minor" / Int8ub,
+    "patch" / Int8ub,
+)
 
 BuildInfo = Struct()
 BoardInfo = Struct()
@@ -73,9 +77,9 @@ StatusEx = Struct(
     "profile_index" / Int8ub,
     # length of additional flag bytes
     "additional_mode_bytes" / Int8ub,
-    # Probe(this.additional_mode_bytes),
+    # a continuation of the above mode flags
     "additional_mode" / FixedSized(this.additional_mode_bytes, GreedyBytes),
-    # Probe(this.additional_mode),
+    # Flags indicating why arming is currently disabled
     "arming_disable_flags"
     / FlagsEnum(
         Int32ub,
@@ -148,9 +152,11 @@ SensorAlignment = Struct(
     "gyro_2_align" / Int8ub,
 )
 
-RawSingle = Array(3, Int16ub)
-
-RawIMU = Struct("accelerometer" / RawSingle, "gyroscope" / RawSingle, "magnetometer" / RawSingle,)
+RawIMU = Struct(
+    "accelerometer" / RawSingle,
+    "gyroscope" / RawSingle,
+    "magnetometer" / RawSingle,
+)
 
 __all__ = [
     "ApiVersion",

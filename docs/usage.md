@@ -1,7 +1,7 @@
 # Usage
 
-To use Confo MSP configuration in a project
+To use Bonfo configuration management in a project
 
 ```
-import confo
+import bonfo
 ```

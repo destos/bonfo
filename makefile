@@ -1,21 +1,22 @@
-sources = confo
+sources = bonfo
+prun = poetry run
 
-.PHONY: test format lint unittest coverage pre-commit clean
+.PHONY: test format lint unittest coverage pre-commit clean docs
 test: format lint unittest
 
 format:
-	isort $(sources) tests
-	black $(sources) tests
+	${prun} isort $(sources) tests
+	${prun} black $(sources) tests
 
 lint:
-	flake8 $(sources) tests
-	mypy $(sources) tests
+	${prun} flake8 $(sources) tests
+	${prun} mypy $(sources) tests
 
 unittest:
-	pytest
+	${prun} pytest
 
 coverage:
-	pytest --cov=$(sources) --cov-branch --cov-report=term-missing tests
+	${prun} pytest --cov=$(sources) --cov-branch --cov-report=term-missing tests
 
 pre-commit:
 	pre-commit run --all-files
@@ -25,3 +26,6 @@ clean:
 	rm -rf *.egg-info
 	rm -rf .tox dist site
 	rm -rf coverage.xml .coverage
+
+docs:
+	${prun} mkdocs build

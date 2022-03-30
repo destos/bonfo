@@ -1,25 +1,23 @@
-"""Console script for confo."""
+"""Console script for bonfo."""
 
-from dataclasses import dataclass
+import atexit
 import logging
-import sys
-import shelve
 import os
+import shelve
+import sys
+from dataclasses import dataclass
 from time import sleep
-from typing import NamedTuple, Optional
-from construct import ChecksumError, ConstError
+from typing import Optional, Sequence
 
 import rich_click as click
+from construct import ChecksumError, ConstError
 from loca import Loca
+from rich import print
 from serial.tools.list_ports import comports
 from serial.tools.list_ports_common import ListPortInfo
-import atexit
 
-from rich import print
-from confo.msp import FlightController
-
-from confo.msp.board import Board
-from confo.msp.codes import MSP
+from bonfo.msp.board import Board
+from bonfo.msp.codes import MSP
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -31,12 +29,15 @@ logging.basicConfig(
     format="[%(levelname)s] [%(asctime)s]: %(message)s", level=getattr(logging, "DEBUG"), stream=sys.stdout
 )
 
-# config stuff
+# config things
 try:
     loca = Loca()
-    confo_state_dir = loca.user.state.config() / "confo"
-    state_file = str(confo_state_dir / "cli_state")
-    os.makedirs(confo_state_dir)
+    path = loca.user.state.config()
+    if isinstance(path, list):
+        path = path.pop()
+    bonfo_state_dir = path / "bonfo"
+    state_file = str(bonfo_state_dir / "cli_state")
+    os.makedirs(bonfo_state_dir)
 except FileExistsError:
     pass
 finally:
@@ -45,59 +46,68 @@ finally:
 
 
 @dataclass
-class ConfoContext:
+class BonfoContext:
+    # TODO: hook/bring in state_store as a storage backend, possible change to data class and use the data class wizard?
     port: Optional[ListPortInfo] = None
+    # Go this direction of only working on one rate/pid profile?
+    # Profile to switch to
+    # profile: = None
+    # Rate profile to act on
+    # rate_profile: = None
 
     _board = None
 
     @property
     def board(self) -> Optional[Board]:
         if self._board is None and self.port is not None:
+            # TODO: instantiate board with stored values to do diffing?
+            # Possibly on board connect, it grabs the uid of the board and hydrates from
+            # last state that way?
             self._board = Board(self.port.device)
         return self._board
 
 
-confo_context = click.make_pass_decorator(ConfoContext)
+bonfo_context = click.make_pass_decorator(BonfoContext)
 
 
-@click.group("confo")
+@click.group("bonfo")
 @click.pass_context
 def cli(ctx):
-    """
-    Configuration management for flight controllers running **MSP v1** compatible flight controllers.
+    """Bonfo is configuration management for flight controllers running **MSP v1** compatible flight controllers.
 
     > Supported flight controller software:
     >  - BetaFlight
     """
-    # board=state_store.get("board", None),
-    ctx.obj = ConfoContext(port=state_store.get("port", None))
+    ctx.obj = BonfoContext(port=state_store.get("port", None))
 
 
 @cli.command()
-@confo_context
+@bonfo_context
 def check_context(ctx):
+    """Output current context values."""
     print(ctx.board)
     print(ctx.port)
 
 
 @cli.command()
-@confo_context
-def connect(ctx: ConfoContext):
-    "Connect to the FC board"
+@bonfo_context
+def connect(ctx: BonfoContext):
+    """Connect to the FC board."""
+    if ctx.board is None:
+        return click.echo("No port selected")
     with ctx.board as board:
         click.echo(board.send_msg(MSP.API_VERSION))
 
 
 @cli.command()
-@confo_context
-def update(ctx: ConfoContext):
-
-    # with FlightController(ctx.port.device) as fc:
+@bonfo_context
+def update(ctx: BonfoContext):
+    if ctx.board is None:
+        return click.echo("No port selected")
     with ctx.board as board:
         while True:
             sleep(1)
             click.echo(board.send_msg(MSP.STATUS_EX))
-            # click.echo(board.send_msg(MSP.RAW_IMU))
             try:
                 click.echo(board.receive_msg())
             except (ChecksumError, ConstError) as e:
@@ -105,16 +115,15 @@ def update(ctx: ConfoContext):
 
 
 @cli.command()
-@confo_context
+@bonfo_context
 @click.option('-s', '--include-links', is_flag=True, help='include entries that are symlinks to real devices')
 def set_port(cxt, include_links, err=True):
+    """Set the default port to use during this session."""
     # TODO: let user know they are changing the port from the context if it changes
     # or show current as well
-    """Set the default port to use during this session."""
     iterator = sorted(comports(include_links=include_links))
     ports = {n: lpi for n, lpi in enumerate(iterator, 1)}
     for n, (port, desc, hwid) in ports.items():
-        # for n, p in ports:
         click.echo(f"{n}: {port}, {desc}, {hwid}")
     port = click.prompt("Select a port", show_choices=True, value_proc=int)
     try:
@@ -131,11 +140,12 @@ def make_snapshot():
     pass
 
 
-# comports
 def main():
-    cli(prog_name="confo")
+    cli(prog_name="bonfo")
 
 
 if __name__ == "__main__":
     atexit.register(state_store.close)
     main()  # pragma: no cover
+
+__all__: Sequence[str] = []

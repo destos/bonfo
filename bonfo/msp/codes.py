@@ -1,15 +1,5 @@
 from enum import IntEnum
 
-# class Comparing:
-#     def __gt__(self, other):
-#         return self.value > other
-
-#     def __lt__(self, other):
-#         return self.value < other
-
-#     def __int__(self):
-#         return self.value
-
 
 class MSP(IntEnum):
     API_VERSION = 1
@@ -176,9 +166,7 @@ class MSP(IntEnum):
     DEBUGMSG = 253  # deprecated
     DEBUG = 254
 
-
-# INAV specific codes
-class MSPV2(IntEnum):
+    # INAV/v2 specific codes
     SETTING = 0x1003
     SET_SETTING = 0x1004
 
@@ -188,8 +176,8 @@ class MSPV2(IntEnum):
     COMMON_SETTING_INFO = 0x1007
     COMMON_PG_LIST = 0x1008
 
-    CF_SERIAL_CONFIG = 0x1009
-    SET_CF_SERIAL_CONFIG = 0x100A
+    INAV_CF_SERIAL_CONFIG = 0x1009
+    INAV_SET_CF_SERIAL_CONFIG = 0x100A
 
     INAV_STATUS = 0x2000
     INAV_OPTICAL_FLOW = 0x2001
@@ -220,8 +208,8 @@ class MSPV2(IntEnum):
 
     INAV_DEBUG = 0x2019
 
-    BLACKBOX_CONFIG = 0x201A
-    SET_BLACKBOX_CONFIG = 0x201B
+    INAV_BLACKBOX_CONFIG = 0x201A
+    INAV_SET_BLACKBOX_CONFIG = 0x201B
 
     INAV_SENSOR_CONFIG = 0x201C
     INAV_SET_SENSOR_CONFIG = 0x201D
@@ -233,7 +221,7 @@ class MSPV2(IntEnum):
     INAV_SET_LOGIC_CONDITIONS = 0x2023
     INAV_LOGIC_CONDITIONS_STATUS = 0x2026
 
-    PID = 0x2030
-    SET_PID = 0x2031
+    INAV_PID = 0x2030
+    INAV_SET_PID = 0x2031
 
     INAV_OPFLOW_CALIBRATION = 0x203

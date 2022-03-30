@@ -1,8 +1,8 @@
 from math import floor
 
-from construct import Adapter, Byte, Int8ub
+from construct import Adapter, Array, Byte, Int8ub, Int16ub
 
-from confo.msp.codes import MSP
+from bonfo.msp.codes import MSP
 
 
 class RcAdapter(Adapter):
@@ -24,3 +24,4 @@ class MessageTypeAdapter(Adapter):
 
 MessageType = MessageTypeAdapter(Byte)
 RcFloat = RcAdapter(Int8ub)
+RawSingle = Array(3, Int16ub)

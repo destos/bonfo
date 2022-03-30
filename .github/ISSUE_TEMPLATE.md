@@ -1,4 +1,4 @@
-* Confo MSP configuration version:
+* Bonfo configuration management version:
 * Python version:
 * Operating System:
 
