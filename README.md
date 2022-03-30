@@ -2,7 +2,8 @@
 
 [![pypi](https://img.shields.io/pypi/v/bonfo.svg)](https://pypi.org/project/bonfo/)
 [![python](https://img.shields.io/pypi/pyversions/bonfo.svg)](https://pypi.org/project/bonfo/)
-[![Build Status](https://github.com/destos/bonfo/actions/workflows/dev.yml/badge.svg)](https://github.com/destos/bonfo/actions/workflows/dev.yml)
+[![Build Status](https://github.com/destos/bonfo/actions/workflows/release.yml/badge.svg)](https://github.com/destos/bonfo/actions/workflows/release.yml)
+[![Dev Build Status](https://github.com/destos/bonfo/actions/workflows/dev.yml/badge.svg)](https://github.com/destos/bonfo/actions/workflows/dev.yml)
 [![codecov](https://codecov.io/gh/destos/bonfo/branch/main/graphs/badge.svg)](https://codecov.io/github/destos/bonfo)
 
 
