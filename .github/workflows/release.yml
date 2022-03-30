@@ -79,6 +79,7 @@ jobs:
           files: dist/*.whl
           draft: false
           prerelease: false
+          # prerelease: ${{ steps.changelog_reader.outputs.status }}
 
       - name: publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.5.0
