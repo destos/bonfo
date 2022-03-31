@@ -26,22 +26,24 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-click = "8.0.1"
 pyserial = "^3.5"
 dataclass-wizard = "^0.22.0"
 construct = "^2.10.67"
-rich = "^12.0.1"
-rich-click = "^1.2.1"
-loca = "^2.0.1"
+click = { version = "8.0.1", extras = ["cli"]}
+rich = { version = "^12.0.1", extras = ["cli"]}
+rich-click = { version = "^1.2.1", extras = ["cli"]}
+loca = { version = "^2.0.1", extras = ["cli"]}
+mkdocs-click = {version = "^0.5.0", extras = ["cli"]}
 
 black  = { version = "^21.5b2", optional = true}
 isort  = { version = "^5.8.0", optional = true}
 flake8  = { version = "^3.9.2", optional = true}
 flake8-docstrings = { version = "^1.6.0", optional = true }
 mypy = {version = "^0.940", optional = true}
-pytest  = { version = "^6.2.4", optional = true}
-pytest-cov  = { version = "^2.12.0", optional = true}
+pytest  = { version = "^7.1.1", optional = true}
+pytest-cov  = { version = "^3.0.0", optional = true}
 pytest-watcher = {version = "^0.2.3", optional = true}
+pytest-mock = {version = "^3.7.0", optional = true}
 tox  = { version = "^3.20.1", optional = true}
 virtualenv  = { version = "^20.2.2", optional = true}
 pip  = { version = "^20.3.1", optional = true}
@@ -50,6 +52,7 @@ mkdocs-include-markdown-plugin  = { version = "^3.3.0", optional = true}
 mkdocs-material  = { version = "^8.2.8", optional = true}
 mkdocstrings  = { version = "^0.18.1", optional = true}
 mkdocs-material-extensions  = { version = "^1.0.3", optional = true}
+mkdocs-git-revision-date-plugin = {version = "^0.3.2", optional = true}
 twine  = { version = "^3.8.0", optional = true}
 mkdocs-autorefs = {version = "^0.4.1", optional = true}
 pre-commit = {version = "^2.12.0", optional = true}
@@ -61,12 +64,13 @@ construct-typing = {version = "^0.5.2", optional = true}
 [tool.poetry.extras]
 test = [
     "pytest",
+    "pytest-cov",
+    "pytest-mock",
     "black",
     "isort",
     "mypy",
     "flake8",
     "flake8-docstrings",
-    "pytest-cov",
 ]
 
 dev = [
@@ -84,11 +88,12 @@ dev = [
 
 doc = [
     "mkdocs",
-    "mkdocs-include-markdown-plugin",
     "mkdocs-material",
-    "mkdocstrings",
     "mkdocs-material-extension",
-    "mkdocs-autorefs"
+    "mkdocs-autorefs",
+    "mkdocs-include-markdown-plugin",
+    "mkdocs-git-revision-date-plugin",
+    "mkdocstrings",
 ]
 
 [tool.poetry.scripts]
@@ -131,7 +136,6 @@ log_cli = true
 log_cli_level = "DEBUG"
 log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
-
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

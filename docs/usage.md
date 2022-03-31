@@ -1,6 +1,13 @@
-# Usage
+To use Bonfo in a project
 
-To use Bonfo configuration management in a project
+# As a CLI utility
+
+```bash
+pipx install bonfo
+bonfo
+```
+
+# As a module
 
 ```
 import bonfo

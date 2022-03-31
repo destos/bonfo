@@ -1,4 +1,4 @@
-"""Top-level package for Bonfo configuration management."""
+"""Top-level package for Bonfo."""
 
 __author__ = """Patrick Forringer"""
 __email__ = 'patrick@forringer.com'
