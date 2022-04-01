@@ -1,15 +1,16 @@
-"""Board package for Bonfo configuration management."""
+"""Board package for Bonfo."""
 import logging
 import time
-from threading import BoundedSemaphore
+from dataclasses import dataclass, field
+from multiprocessing import BoundedSemaphore
+from typing import Sequence
 
 import serial
 
-from bonfo.msp.codes import MSP
-from bonfo.msp.message import Message
-from bonfo.msp.utils import out_message_builder
-
-from .state import Config, RcTuning, RxConfig
+from .msp.codes import MSP
+from .msp.message import Message
+from .msp.state import Config, RcTuning, RxConfig
+from .msp.utils import out_message_builder
 
 logger = logging.getLogger(__name__)
 
@@ -17,21 +18,41 @@ logger = logging.getLogger(__name__)
 class Board:
     """Board is an interface for the serial connection, configuration retrieval and saving of data."""
 
+    @dataclass
+    class Profile:
+        """Profile context manager"""
+
+        board: "Board" = None
+        profile: int = 0
+        profiles: Sequence[int] = field(default_factory=set)
+
+        def __post_init__(self, *args, **kwargs):
+            pass
+            # super().__post_init__(self, *args, **kwargs)
+
+        def __enter__(self, profile_id: int = 0):
+            pass
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            pass
+
     def __init__(self, port: str, baudrate: int = 115200, trials=100) -> None:
         self.conf = Config()
+        self.profile = self.Profile(board=self)
 
         # TODO: register configs for saving/applying?
         self.rx_conf = RxConfig()
         self.rc_tuning = RcTuning()
 
+        # Serial options/state
         self.serial_trials = trials
         self.serial_write_lock = BoundedSemaphore(value=1)
         self.serial_read_lock = BoundedSemaphore(value=1)
+        self.is_serial_open = False
+        self.serial = self._init_serial(port, baudrate=baudrate)
 
-        self.init_serial(port, baudrate=baudrate)
-
-    def init_serial(self, port: str, baudrate: int = 115200):
-        self.serial = serial.Serial(
+    def _init_serial(self, port: str, baudrate: int = 115200):
+        serial_port = serial.Serial(
             port,
             baudrate=baudrate,
             bytesize=serial.EIGHTBITS,
@@ -43,12 +64,11 @@ class Board:
             dsrdtr=False,
             writeTimeout=0,
         )
-        logger.debug(self.serial)
+        logger.info("New serial port initialized:", serial_port)
+        return serial_port
 
     def __enter__(self):
-        self.is_serial_open = self.connect(trials=self.serial_trials)
-
-        if self.is_serial_open:
+        if self.connect(trials=self.serial_trials):
             return self
         else:
             logger.warning("Serial port ({}) not ready/available".format(self.serial.port))
@@ -58,11 +78,6 @@ class Board:
         if self.serial.is_open:
             self.serial.readlines
             self.serial.close()
-
-        """
-
-        Returns:
-        """
 
     def connect(self, trials=100, delay=0.5):
         """Opens the serial connection with the board.

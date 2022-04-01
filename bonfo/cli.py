@@ -16,7 +16,7 @@ from rich import print
 from serial.tools.list_ports import comports
 from serial.tools.list_ports_common import ListPortInfo
 
-from bonfo.msp.board import Board
+from bonfo.board import Board
 from bonfo.msp.codes import MSP
 
 click.rich_click.USE_MARKDOWN = True

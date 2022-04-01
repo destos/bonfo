@@ -1107,6 +1107,14 @@ tqdm = ">=4.14"
 urllib3 = ">=1.26.0"
 
 [[package]]
+name = "types-mock"
+version = "4.0.12"
+description = "Typing stubs for mock"
+category = "main"
+optional = true
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.1.1"
 description = "Backported and Experimental Type Hints for Python 3.6+"
@@ -1179,12 +1187,12 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [extras]
 dev = ["tox", "pre-commit", "virtualenv", "pip", "twine", "toml", "bump2version", "autoflake8", "construct-typing", "pytest-watcher"]
 doc = ["mkdocs", "mkdocs-material", "mkdocs-autorefs", "mkdocs-include-markdown-plugin", "mkdocs-git-revision-date-plugin", "mkdocstrings"]
-test = ["pytest", "pytest-cov", "pytest-mock", "black", "isort", "mypy", "flake8", "flake8-docstrings"]
+test = ["pytest", "pytest-cov", "pytest-mock", "types-mock", "black", "isort", "mypy", "flake8", "flake8-docstrings"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4.0"
-content-hash = "495424f5a6109ba403066d5aea57e326ea95d792cb1af692d0445e9a8e0b96f2"
+content-hash = "cfe9048ffe51f43f3bfcbb37702de2a240495f8bad5a2bf7564db0b06430412b"
 
 [metadata.files]
 appdirs = [
@@ -1823,6 +1831,10 @@ tqdm = [
 twine = [
     {file = "twine-3.8.0-py3-none-any.whl", hash = "sha256:d0550fca9dc19f3d5e8eadfce0c227294df0a2a951251a4385797c8a6198b7c8"},
     {file = "twine-3.8.0.tar.gz", hash = "sha256:8efa52658e0ae770686a13b675569328f1fba9837e5de1867bfe5f46a9aefe19"},
+]
+types-mock = [
+    {file = "types-mock-4.0.12.tar.gz", hash = "sha256:f8b1dbe128dc2d5aa038876a8b497dfd1a9405210a5eb3dc4b4757c2e254627c"},
+    {file = "types_mock-4.0.12-py3-none-any.whl", hash = "sha256:81f98e66bddde1b2a8d96c15c084d5d3ed96cf6137bca9ba8aabc6b6865b9ca7"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.1.1-py3-none-any.whl", hash = "sha256:21c85e0fe4b9a155d0799430b0ad741cdce7e359660ccbd8b530613e8df88ce2"},
