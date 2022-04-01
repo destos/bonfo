@@ -3,7 +3,6 @@ import logging
 import time
 from dataclasses import dataclass, field
 from multiprocessing import BoundedSemaphore
-from typing import Sequence
 
 import serial
 
@@ -20,11 +19,11 @@ class Board:
 
     @dataclass
     class Profile:
-        """Profile context manager"""
+        """Profile context manager."""
 
-        board: "Board" = None
+        board: "Board"
         profile: int = 0
-        profiles: Sequence[int] = field(default_factory=set)
+        profiles: set[int] = field(default_factory=set)
 
         def __post_init__(self, *args, **kwargs):
             pass

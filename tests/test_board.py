@@ -26,8 +26,8 @@ class TestBoardInit(unittest.TestCase):
         self.assertEqual(board.serial_trials, 100)
         self.assertIsInstance(board.serial_write_lock, BoundedSemaphore)
         self.assertIsInstance(board.serial_read_lock, BoundedSemaphore)
-        board._init_serial.assert_called_once_with("/dev/tty-mock", baudrate=115200)
-        board.connect.assert_not_called()
+        board._init_serial.assert_called_once_with("/dev/tty-mock", baudrate=115200)  # type: ignore
+        board.connect.assert_not_called()  # type: ignore
 
     def test_board_context_manager(self) -> None:
         with Board("/dev/tty-mock") as board:
