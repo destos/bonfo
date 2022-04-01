@@ -7,8 +7,12 @@ pipx install bonfo
 bonfo
 ```
 
+```bash
+pip install --user bonfo
+```
+
 # As a module
 
-```
+```bash
 import bonfo
 ```
