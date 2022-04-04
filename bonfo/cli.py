@@ -30,6 +30,7 @@ logging.basicConfig(
 )
 
 # config things
+# TODO: use datawizard instead, and init the board/port via property.
 try:
     loca = Loca()
     path = loca.user.state.config()
@@ -42,7 +43,10 @@ except FileExistsError:
     pass
 finally:
     logger.debug("State file: %s", state_file)
-    state_store = shelve.open(state_file, flag="c")
+    try:
+        state_store = shelve.open(state_file, flag="c")
+    except Exception as e:
+        logger.exception("Error loading state", exc_info=e)
 
 
 @dataclass
