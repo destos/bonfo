@@ -1,6 +1,6 @@
 from math import floor
 
-from construct import Adapter, Array, Byte, Int8ub, Int16ub
+from construct import Adapter, Array, Byte, ExprAdapter, Int8ub, Int16ub, Validator, obj_
 
 from bonfo.msp.codes import MSP
 
@@ -25,3 +25,30 @@ class MessageTypeAdapter(Adapter):
 MessageType = MessageTypeAdapter(Byte)
 RcFloat = RcAdapter(Int8ub)
 RawSingle = Array(3, Int16ub)
+
+
+RATEPROFILE_MASK = 0x80  # 1 << 7
+
+
+class PIDProfileValidator(Validator):
+    def _validate(self, obj, context, path):
+        return int(obj) in list(range(1, 4))
+
+
+class RateProfileValidator(Validator):
+    def _validate(self, obj, context, path):
+        return int(obj) in list(range(1, 7))
+
+
+SelectPIDProfile = PIDProfileValidator(ExprAdapter(Int8ub, obj_ + 1, obj_ - 1))
+
+
+SelectRateProfile = RateProfileValidator(
+    ExprAdapter(
+        Int8ub,
+        # decoder
+        (obj_ + 1) ^ RATEPROFILE_MASK,
+        # encoder
+        (obj_ ^ RATEPROFILE_MASK) - 1,
+    )
+)

@@ -43,6 +43,7 @@ function_map = {
     MSP.RX_CONFIG: structs.RxConfig,
     MSP.RC_TUNING: structs.RcTuning,
     MSP.RAW_IMU: structs.RawIMU,
+    MSP.SELECT_SETTING: structs.SelectSetting,
 }
 
 

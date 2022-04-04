@@ -9,10 +9,11 @@ from construct import (
     Int32ub,
     PaddedString,
     Struct,
+    Union,
     this,
 )
 
-from .adapters import RawSingle, RcFloat
+from .adapters import RawSingle, RcFloat, SelectPIDProfile, SelectRateProfile
 
 ApiVersion = Struct(
     "msp_protocol" / Int8ub,
@@ -33,6 +34,25 @@ BoardInfo = Struct()
 Uid = Struct("uid" / Array(3, Int32ub))
 AccTrim = Struct()
 Name = Struct()
+
+
+SelectSetting = Union(None, "pid_profile" / SelectPIDProfile, "rate_profile" / SelectRateProfile)
+"""Select between rate and PID profiles in one message.
+
+The first bit is a flag to allow switching between updating the PID profile
+or rate profile. They are mutually exclusive.
+
+PID profiles are limited to 1-3, and rate profiles 1-6.
+Any values over or under those will select pid/rate profile 1.
+
+This message will not be successful if the board is armed.
+"""
+
+CopyProfile = Struct()
+"""Tell one profile to copy to another."""
+
+EepromWrite = Struct()
+"""Save all settings."""
 
 Status = Struct(
     "cycle_time" / Int16ub,
@@ -173,4 +193,5 @@ __all__ = [
     "RcTuning",
     "SensorAlignment",
     "RawIMU",
+    "SelectSetting",
 ]
