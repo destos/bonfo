@@ -26,6 +26,7 @@ MessageType = MessageTypeAdapter(Byte)
 RcFloat = RcAdapter(Int8ub)
 RawSingle = Array(3, Int16ub)
 
+Int8ubPlusOne = ExprAdapter(Int8ub, obj_ + 1, obj_ - 1)
 
 RATEPROFILE_MASK = 0x80  # 1 << 7
 
@@ -40,7 +41,7 @@ class RateProfileValidator(Validator):
         return int(obj) in list(range(1, 7))
 
 
-SelectPIDProfile = PIDProfileValidator(ExprAdapter(Int8ub, obj_ + 1, obj_ - 1))
+SelectPIDProfile = PIDProfileValidator(Int8ubPlusOne)
 
 
 SelectRateProfile = RateProfileValidator(

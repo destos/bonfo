@@ -231,7 +231,6 @@ class RcTuning(YAMLWizard):
 
     def apply_struct(self, data):
         self.struct.parse(data)
-        breakpoint()
 
 
 # # @dataclass

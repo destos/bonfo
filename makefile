@@ -29,3 +29,6 @@ clean:
 
 docs:
 	${prun} mkdocs build
+
+docs-test:
+	${prun} mkdocs serve

@@ -1,16 +1,16 @@
 """Console script for bonfo."""
 
+import asyncio
 import atexit
+import functools
 import logging
 import os
 import shelve
 import sys
 from dataclasses import dataclass
-from time import sleep
 from typing import Optional, Sequence
 
 import rich_click as click
-from construct import ChecksumError, ConstError
 from loca import Loca
 from rich import print
 from serial.tools.list_ports import comports
@@ -49,6 +49,14 @@ finally:
         logger.exception("Error loading state", exc_info=e)
 
 
+def async_cmd(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(func(*args, **kwargs))
+
+    return wrapper
+
+
 @dataclass
 class BonfoContext:
     # TODO: hook/bring in state_store as a storage backend, possible change to data class and use the data class wizard?
@@ -77,10 +85,10 @@ bonfo_context = click.make_pass_decorator(BonfoContext)
 @click.group("bonfo")
 @click.pass_context
 def cli(ctx):
-    """Bonfo is configuration management for flight controllers running **MSP v1** compatible flight controllers.
+    """Bonfo is configuration management for flight controllers running **MSP v1**.
 
     > Supported flight controller software:
-    >  - BetaFlight
+    >  - BetaFlight(>=3.4)
     """
     ctx.obj = BonfoContext(port=state_store.get("port", None))
 
@@ -105,23 +113,67 @@ def connect(ctx: BonfoContext):
 
 @cli.command()
 @bonfo_context
-def update(ctx: BonfoContext):
+@async_cmd
+async def test(ctx: BonfoContext):
+    """Just me, testing things."""
     if ctx.board is None:
         return click.echo("No port selected")
-    with ctx.board as board:
-        while True:
-            sleep(1)
-            click.echo(board.send_msg(MSP.STATUS_EX))
-            try:
-                click.echo(board.receive_msg())
-            except (ChecksumError, ConstError) as e:
-                logger.exception("error", exc_info=e)
+    async with ctx.board.connect() as board:
+        async with board.profile(rate=3, pid=2) as profile:
+            print("pid", profile.pid)
+            print("rate", profile.rate)
+            print("setting pid to 1")
+            profile.pid = 1
+            print("pid", profile.pid)
+            print("setting rate to 1")
+            profile.rate = 1
+            print("rate", profile.rate)
+            print("applying changes")
+            await profile.apply_changes()
+            print("pid", profile.pid)
+            print("rate", profile.rate)
+
+
+@cli.group("profiles")
+@bonfo_context
+def profiles(ctx):
+    pass
+
+
+@profiles.command()
+@bonfo_context
+@async_cmd
+async def get(ctx: BonfoContext):
+    """Get the PID and rate profile of the flight controller."""
+    if ctx.board is None:
+        return click.echo("No port selected")
+    async with ctx.board.connect() as board:
+        click.echo(f"{board.profile}")
+
+
+@profiles.command()
+@bonfo_context
+@click.option("-p", "--pid", type=int)
+@click.option("-r", "--rate", type=int)
+@async_cmd
+async def set(ctx: BonfoContext, pid, rate):
+    """Set the PID or rate profile of the flight controller."""
+    if ctx.board is None:
+        return click.echo("No port selected")
+    async with ctx.board.connect() as board:
+        click.echo(f"Before: {board.profile}")
+        if pid is not None:
+            board.profile.pid = pid
+        if rate is not None:
+            board.profile.rate = rate
+        await board.profile.apply_changes()
+        click.echo(f"After: {board.profile}")
 
 
 @cli.command()
 @bonfo_context
 @click.option('-s', '--include-links', is_flag=True, help='include entries that are symlinks to real devices')
-def set_port(cxt, include_links, err=True):
+def set_port(cxt: BonfoContext, include_links, err=True):
     """Set the default port to use during this session."""
     # TODO: let user know they are changing the port from the context if it changes
     # or show current as well

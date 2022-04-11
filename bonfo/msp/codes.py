@@ -225,3 +225,4 @@ class MSP(IntEnum):
     INAV_SET_PID = 0x2031
 
     INAV_OPFLOW_CALIBRATION = 0x203
+frame_map = {v.real: v for v in MSP.__members__.values()}

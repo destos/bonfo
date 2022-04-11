@@ -25,42 +25,43 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = ">=3.9,<4.0"
 pyserial = "^3.5"
-dataclass-wizard = "^0.22.0"
-construct = "^2.10.67"
-click = { version = "8.0.1", extras = ["cli"]}
-rich = { version = "^12.0.1", extras = ["cli"]}
-rich-click = { version = "^1.2.1", extras = ["cli"]}
-loca = { version = "^2.0.1", extras = ["cli"]}
-mkdocs-click = {version = "^0.5.0", extras = ["cli"]}
+pyserial-asyncio = "^0.6"
+dataclass-wizard = "^0.22"
+construct = "^2.10"
+click = { version = "^8.0", extras = ["cli"]}
+rich = { version = "^12.0", extras = ["cli"]}
+rich-click = { version = "^1.2", extras = ["cli"]}
+loca = { version = "^2.0", extras = ["cli"]}
 
-black  = { version = "^21.5b2", optional = true}
-isort  = { version = "^5.8.0", optional = true}
-flake8  = { version = "^3.9.2", optional = true}
-flake8-docstrings = { version = "^1.6.0", optional = true }
+black  = { version = "^22.0", optional = true}
+isort  = { version = "^5", optional = true}
+flake8  = { version = "^3", optional = true}
+flake8-docstrings = { version = "^1", optional = true }
 mypy = {version = "^0.940", optional = true}
-pytest  = { version = "^7.1.1", optional = true}
-pytest-cov  = { version = "^3.0.0", optional = true}
-pytest-watcher = {version = "^0.2.3", optional = true}
-pytest-mock = {version = "^3.7.0", optional = true}
-types-mock = {version = "^4.0.12", optional = true}
-tox  = { version = "^3.20.1", optional = true}
-virtualenv  = { version = "^20.2.2", optional = true}
-pip  = { version = "^20.3.1", optional = true}
-mkdocs  = { version = "^1.3.0", optional = true}
-mkdocs-include-markdown-plugin  = { version = "^3.3.0", optional = true}
-mkdocs-material  = { version = "^8.2.8", optional = true}
-mkdocstrings  = { version = "^0.18.1", optional = true}
-mkdocs-material-extensions  = { version = "^1.0.3", optional = true}
-mkdocs-git-revision-date-plugin = {version = "^0.3.2", optional = true}
-twine  = { version = "^3.8.0", optional = true}
-mkdocs-autorefs = {version = "^0.4.1", optional = true}
-pre-commit = {version = "^2.12.0", optional = true}
-toml = {version = "^0.10.2", optional = true}
-bump2version = {version = "^1.0.1", optional = true}
-autoflake8 = {version = "^0.3.1", optional = true}
-construct-typing = {version = "^0.5.2", optional = true}
+pytest  = { version = "^7", optional = true}
+pytest-cov  = { version = "^3", optional = true}
+pytest-watcher = {version = "^0", optional = true}
+pytest-mock = {version = "^3", optional = true}
+types-mock = {version = "^4", optional = true}
+tox  = { version = "^3", optional = true}
+virtualenv  = { version = "^20", optional = true}
+pip  = { version = "^20", optional = true}
+mkdocs  = { version = "^1", optional = true}
+mkdocstrings  = { version = "^0", optional = true}
+mkdocs-click = {version = "^0", optional = true}
+mkdocs-git-revision-date-plugin = {version = "^0", optional = true}
+mkdocs-include-markdown-plugin  = { version = "^3", optional = true}
+mkdocs-material  = { version = "^8", optional = true}
+mkdocs-material-extensions  = { version = "^1", optional = true}
+twine  = { version = "^3", optional = true}
+mkdocs-autorefs = {version = "^0", optional = true}
+pre-commit = {version = "^2", optional = true}
+toml = {version = "^0", optional = true}
+bump2version = {version = "^1", optional = true}
+autoflake8 = {version = "^0", optional = true}
+construct-typing = {version = "^0", optional = true}
 
 [tool.poetry.extras]
 test = [
@@ -68,11 +69,6 @@ test = [
     "pytest-cov",
     "pytest-mock",
     "types-mock",
-    "black",
-    "isort",
-    "mypy",
-    "flake8",
-    "flake8-docstrings",
 ]
 
 dev = [
@@ -82,10 +78,15 @@ dev = [
     "pip",
     "twine",
     "toml",
+    "black",
+    "isort",
+    "mypy",
     "bump2version",
     "autoflake8",
     "construct-typing",
     "pytest-watcher",
+    "flake8",
+    "flake8-docstrings",
  ]
 
 doc = [

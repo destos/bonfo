@@ -4,7 +4,7 @@ from multiprocessing.synchronize import BoundedSemaphore
 
 import pytest
 
-from bonfo.board import Board
+from bonfo.board import Board, Profile
 from bonfo.msp.state import Config
 
 logger = logging.getLogger(__name__)
@@ -17,12 +17,17 @@ def init_board_mocks(module_mocker):
     module_mocker.patch("bonfo.board.Board.connect")
 
 
+@pytest.fixture(scope="function")
+def init_msg_mocks(module_mocker):
+    module_mocker.patch("bonfo.board.Board.send_msg").stub()
+    module_mocker.patch("bonfo.board.Board.receive_msg").stub()
+
+
 @pytest.mark.usefixtures("init_board_mocks")
 class TestBoardInit(unittest.TestCase):
     def test_board_init_values(self) -> None:
         board = Board("/dev/tty-mock")
         self.assertIsInstance(board.conf, Config)
-        self.assertIsInstance(board.profile, Board.Profile)
         self.assertEqual(board.serial_trials, 100)
         self.assertIsInstance(board.serial_write_lock, BoundedSemaphore)
         self.assertIsInstance(board.serial_read_lock, BoundedSemaphore)
@@ -38,3 +43,38 @@ class TestBoardInit(unittest.TestCase):
         with Board("/dev/tty-mock", trials=2) as board:
             self.assertEqual(board.serial_trials, 2)
             board.connect.assert_called_once_with(trials=2)
+
+
+# @pytest.mark.usefixtures("init_board_mocks", "init_msg_mocks")
+# class TestBoardProfile(unittest.TestCase):
+
+#     @pytest.fixture(autouse=True)
+#     def test_as_property(self, mocker):
+#         board = mocker.stub()
+#         board.profile = Profile.as_property(board, (1, 6))
+
+#         self.assertEqual(board.profile, 1)
+
+
+@pytest.mark.usefixtures("init_board_mocks")
+class TestBoardProfileManager(unittest.TestCase):
+    def test_initial_state(self) -> None:
+        board = Board("/dev/tty-mock")
+        self.assertIsInstance(board.profile, Profile)
+        self.assertEqual(board.profile.pid, 1)
+        self.assertEqual(board.profile.rate, 1)
+        self.assertFalse(board.profile.revert_on_exit)
+        self.assertEqual(board.profile.board, board)
+
+    def xtest_profile_manager_pid_side_effects(self) -> None:
+        board = Board("/dev/tty-mock")
+        self.assertEqual(board.profile.pid, 1)
+        self.assertEqual(board.profile.rate, 1)
+        self.assertFalse(board.profile.revert_on_exit)
+        with board.profile(pid_profile=3, revert_on_exit=True):
+            self.assertEqual(board.profile.pid, 3)
+            self.assertEqual(board.profile.rate, 1)
+            self.assertTrue(board.profile.revert_on_exit)
+
+    def xtest_profile_manager_connects(self) -> None:
+        pass

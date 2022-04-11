@@ -2,7 +2,7 @@ import logging
 
 from bonfo.msp.codes import MSP
 from bonfo.msp.message import Message
-from bonfo.msp.utils import in_message_builder, out_message_builder
+from bonfo.msp.utils import in_message_builder, msg_packet, out_message_builder
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,17 @@ def test_status_ex_response():
     assert msg is not None
 
 
-def xtest_rc_tuning():
+def test_select_setting_ack():
+    msg = Message.parse(b"$M>\x00\xd2\xd2")
+    msg = msg_packet(msg)
+    assert msg.frame_id == MSP.SELECT_SETTING
+    assert msg.data_length == 0
+    assert msg.fields is None
+
+
+def test_rc_tuning_parse():
+    # Broken one after changing values: $M>\x17os\x18SPTd2\x00F\x05!\xa7\x83\n
+    # rc_tuning = b"$M>\x17od\x00FFFA2\x00F\x05\x00dd\x00\x00d\xce\x07\xce\x07\xce\x07\x00\xc7"
     # b"$M>\x02l\x07\xdc\x05\x1a\x04\x00u\x03C\x08\x02\x13\xe2\x04\x00\x00\x00\x00\x00\x00(\x02\x01\x00\x00\x01\x03\x00"
     # RcTuning(
     #     rc_rate=1.0,

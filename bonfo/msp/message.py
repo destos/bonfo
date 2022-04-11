@@ -1,17 +1,15 @@
-import logging
 from functools import reduce
 from operator import xor
 
 from construct import (
     Byte,
     Checksum,
-    ChecksumError,
     Const,
     Default,
     Enum,
     FixedSized,
-    FuncPath,
     Hex,
+    Int8ub,
     Mapping,
     Optional,
     RawCopy,
@@ -21,52 +19,10 @@ from construct import (
     this,
 )
 
-from bonfo.msp.codes import MSP
-from bonfo.msp.structs.adapters import MessageType
-
-from .structs import config as structs
-
-logger = logging.getLogger(__name__)
-
-# Do this map differently + automate or just register the structs?
-function_map = {
-    MSP.API_VERSION: structs.ApiVersion,
-    MSP.FC_VARIANT: structs.FcVariant,
-    MSP.FC_VERSION: structs.FcVersion,
-    MSP.BUILD_INFO: structs.BuildInfo,
-    MSP.BOARD_INFO: structs.BoardInfo,
-    MSP.UID: structs.Uid,
-    MSP.ACC_TRIM: structs.AccTrim,
-    MSP.NAME: structs.Name,
-    MSP.STATUS: structs.Status,
-    MSP.STATUS_EX: structs.StatusEx,
-    MSP.RX_CONFIG: structs.RxConfig,
-    MSP.RC_TUNING: structs.RcTuning,
-    MSP.RAW_IMU: structs.RawIMU,
-    MSP.SELECT_SETTING: structs.SelectSetting,
-}
-
-
-message_id_mapping = {m.value: m for m in MSP}
-
-
-def zero_none_len(data):
-    if data is None:
-        return 0
-    return len(data)
-
-
-zero_none_len_ = FuncPath(zero_none_len)  # type: ignore
-
-
-class LenientChecksum(Checksum):
-    def _parse(self, stream, context, path):
-        try:
-            return super()._parse(stream, context, path)
-        except ChecksumError as e:
-            logger.error("CRC failed {}", exc_info=e)
-            return self.checksumfield._parsereport(stream, context, path)
-
+from .codes import frame_map
+from .structs.adapters import MessageType
+from .structs.expr import zero_none_len_
+from .structs.registry import struct_map
 
 # fmt: off
 # MSP v1 message struct
@@ -88,8 +44,8 @@ Message = Struct(
     # "_is_out" / Computed(this.message_type == "OUT"),
     "packet" / RawCopy(Struct(
         "data_length" / Rebuild(Byte, zero_none_len_(this.fields)),
-        "frame_id" / Mapping(MessageType, message_id_mapping),
-        "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, function_map))),  # type: ignore
+        "frame_id" / Mapping(MessageType, frame_map),
+        "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, struct_map))),  # type: ignore
     )),
     "crc" / Hex(Checksum(
         Byte,
@@ -98,3 +54,46 @@ Message = Struct(
     ))
 )
 # fmt: on
+
+# The idea for this, if we can't get readline to work
+# split the message into the preamble, and data segment.
+# We know how long the preamble is, grab until the data length byte
+# Use the length to grab the rest + crc value.
+# concat the data length byte to newly received bytes and parse the data if available
+# Would love to fix StreamReader.readline so I didn't have to do this
+
+Preamble = Struct(
+    "signature" / Const(b"$"),
+    "version" / Const(b"M"),
+    # Don't need to support v2 at this moment
+    # "version" / Default(
+    #     Enum(Byte,
+    #         V1 = ord("M"),
+    #         V2 = ord("X"),
+    #     ), "V1"),
+    "message_type"
+    / Default(
+        Enum(
+            Byte,
+            IN=ord(">"),
+            OUT=ord("<"),
+            ERR=ord("!"),
+        ),
+        "IN",
+    ),
+    "data_length" / Int8ub,
+    "frame_id" / Mapping(MessageType, frame_map),
+)
+
+Data = Struct(
+    "packet"
+    / RawCopy(
+        Struct(
+            "data_length" / Int8ub,
+            "frame_id" / Mapping(MessageType, frame_map),
+            "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, struct_map))),  # type: ignore
+        )
+    ),
+    # "crc" / Byte
+    "crc" / Hex(Checksum(Byte, lambda data: reduce(xor, data, 0), this.packet.data)),
+)

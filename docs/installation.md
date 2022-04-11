@@ -1,9 +1,27 @@
-## Stable release
+# Stable release
+## As a CLI utility
 
-To install Bonfo, run this command in your terminal:
+If you're interested in utilizing bonfo's CLI interface you can install it a couple ways to make it available to your user.
+
+Using **pipx**:
+``` console
+$ pipx install bonfo
+$ bonfo
+```
+
+Or this command to install it under your user with **pip**:
+``` console
+$ pip install --user bonfo
+$ bonfo
+```
+
+## As a python module
+Run this command in your terminal:
 
 ``` console
 $ pip install bonfo
+or
+$ poetry install bonfo
 ```
 
 This is the preferred method to install Bonfo, as it will always install the most recent stable release.
@@ -11,7 +29,7 @@ This is the preferred method to install Bonfo, as it will always install the mos
 If you don't have [pip][] installed, this [Python installation guide][]
 can guide you through the process.
 
-## From source
+# From source
 
 The source for Bonfo can be downloaded from
 the [Github repo][].
@@ -36,5 +54,5 @@ $ pip install .
 
 [pip]: https://pip.pypa.io
 [Python installation guide]: http://docs.python-guide.org/en/latest/starting/installation/
-[Github repo]: https://github.com/%7B%7B%20cookiecutter.github_username%20%7D%7D/%7B%7B%20cookiecutter.project_slug%20%7D%7D
-[tarball]: https://github.com/%7B%7B%20cookiecutter.github_username%20%7D%7D/%7B%7B%20cookiecutter.project_slug%20%7D%7D/tarball/master
+[Github repo]: https://github.com/destos/bonfo
+[tarball]: https://github.com/destos/bonfo/tarball/master
