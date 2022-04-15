@@ -3,6 +3,8 @@
 name = "bonfo"
 version = "0.1.0"
 homepage = "https://github.com/destos/bonfo"
+repository = "https://github.com/destos/bonfo"
+documentation = "https://destos.github.io/bonfo"
 description = "Multiwii flight controller configuration management"
 authors = ["Patrick Forringer <patrick@forringer.com>"]
 readme = "README.md"
