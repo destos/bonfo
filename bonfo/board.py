@@ -50,8 +50,9 @@ class Profile:
         """Local synced/saved status for selected profiles."""
 
         UNFETCHED = 1
-        CLEAN = 2
-        AWAITING_APPLY = 3
+        FETCHING = 2
+        CLEAN = 3
+        AWAITING_APPLY = 4
 
     _state = SyncedState.UNFETCHED
 
@@ -93,6 +94,8 @@ class Profile:
 
     @asynccontextmanager
     async def __call__(self, pid: Union[int, None] = None, rate: Union[int, None] = None, revert_on_exit=False):
+        self._state = self.SyncedState.FETCHING
+
         # wait here till the board is ready
         await self.board.ready.wait()
 
@@ -145,7 +148,7 @@ class Profile:
 
         (found_pid, found_rate) = await self._set_profiles_from_board()
         # Sanity check
-        if asked_pid == found_pid or asked_rate == found_rate:
+        if asked_pid != found_pid or asked_rate != found_rate:
             return False
         return True
 
@@ -156,7 +159,7 @@ class Board:
     _ready_tasks = []
 
     # TODO: allow to pass init profiles to Profile from board init
-    def __init__(self, device: str, baudrate: int = 115200, trials=100) -> None:
+    def __init__(self, device: str, baudrate: int = 115200, trials=100, loop=None) -> None:
         # events
         self.connected = asyncio.Event()
         self.ready = asyncio.Event()
@@ -167,7 +170,8 @@ class Board:
         self.device = device
         self.baudrate = baudrate
 
-        loop = asyncio.get_running_loop()
+        if loop is None:
+            loop = asyncio.get_running_loop()
 
         # found board configuration
         self.conf = Config()

@@ -25,6 +25,8 @@ def mock_profile(module_mocker):
 @pytest.fixture(scope="function")
 def mock_board(mocker: MockerFixture) -> MockFixture:
     board = mocker.Mock().stub()
-    board.ready = mocker.AsyncMock()
+    board.ready = asyncio.Event()
+    # Always ready
+    board.ready.set()
     board.send_receive = mocker.AsyncMock()
     return board
