@@ -37,14 +37,14 @@ class Profile:
 
     # pid: int
     # rate: int
-    _pid = 0
-    _rate = 0
+    _pid = 1
+    _rate = 1
 
     # Track profile changes before they are applied
-    _profile_tracker = (0, 0)
+    _profile_tracker = (1, 1)
 
     # hold previous profiles for reversion purposes
-    _revert_to_profiles = (0, 0)
+    _revert_to_profiles = (1, 1)
 
     class SyncedState(Enum):
         """Local synced/saved status for selected profiles."""
@@ -60,6 +60,8 @@ class Profile:
 
     @property
     def pid(self) -> int:
+        if self._state == self.SyncedState.UNFETCHED:
+            logger.warning("PID profile not yet fetched from board")
         return self._pid
 
     @pid.setter
@@ -72,6 +74,8 @@ class Profile:
 
     @property
     def rate(self) -> int:
+        if self._state == self.SyncedState.UNFETCHED:
+            logger.warning("Rate profile not yet fetched from board")
         return self._rate
 
     @rate.setter
@@ -116,29 +120,34 @@ class Profile:
         self._profile_tracker = (self._pid, self._rate) = (status.pid_profile, status.rate_profile)
         return self._profile_tracker
 
-    async def _set_pid_to_board(self, pid) -> bool:
+    async def _send_pid_to_board(self, pid) -> bool:
         logger.debug("PID profile to: %s", pid)
         p, msg = await self.board.send_receive(MSP.SELECT_SETTING, dict(pid_profile=pid))
 
-    async def _set_rate_to_board(self, rate) -> bool:
+    async def _send_rate_to_board(self, rate) -> bool:
         logger.debug("Rate profile to: %s", rate)
         p, msg = await self.board.send_receive(MSP.SELECT_SETTING, dict(rate_profile=rate))
 
-    async def apply_changes(self):
-        """Apply any locally changed profiles to the board."""
-        assert self._state == self.SyncedState.AWAITING_APPLY
+    async def apply_changes(self) -> bool:
+        """Apply any locally changed profiles to the board.
+
+        Returns False if it failed to apply.
+        """
+        if not self._state == self.SyncedState.AWAITING_APPLY:
+            return False
         (asked_pid, asked_rate) = self._profile_tracker
         if asked_pid != self.pid:
             logger.debug("PID profile differs, updating board")
-            await self._set_pid_to_board(asked_pid)
+            await self._send_pid_to_board(asked_pid)
         if asked_rate != self.rate:
             logger.debug("Rate profile differs, updating board")
-            await self._set_rate_to_board(asked_rate)
+            await self._send_rate_to_board(asked_rate)
 
         (found_pid, found_rate) = await self._set_profiles_from_board()
-        # Sanity assertions
-        assert asked_pid == found_pid
-        assert asked_rate == found_rate
+        # Sanity check
+        if asked_pid == found_pid or asked_rate == found_rate:
+            return False
+        return True
 
 
 class Board:
@@ -238,11 +247,6 @@ class Board:
             finally:
                 logger.debug("sent: %s %s", code, buff)
 
-    async def send_receive(self, code: MSP, data=None) -> Union[None, Container]:
-        # Use an asyncio Queue to make sure the send/receive happens consecutively.
-        await self.send_msg(code, data=data)
-        return await self.receive_msg()
-
     async def receive_msg(self):
         """Read the current line from the serial port and parse the MSP message.
 
@@ -273,3 +277,7 @@ class Board:
 
             return preamble, None
 
+    async def send_receive(self, code: MSP, data=None) -> Union[None, Container]:
+        # TODO: Use an asyncio Queue to make sure the send/receive happens consecutively?
+        await self.send_msg(code, data=data)
+        return await self.receive_msg()
