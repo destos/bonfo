@@ -5,6 +5,7 @@
 [![Build Status](https://github.com/destos/bonfo/actions/workflows/release.yml/badge.svg)](https://github.com/destos/bonfo/actions/workflows/release.yml)
 [![Dev Build Status](https://github.com/destos/bonfo/actions/workflows/dev.yml/badge.svg)](https://github.com/destos/bonfo/actions/workflows/dev.yml)
 [![codecov](https://codecov.io/gh/destos/bonfo/branch/main/graphs/badge.svg)](https://codecov.io/github/destos/bonfo)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 * Documentation: <https://destos.github.io/bonfo>
 * GitHub: <https://github.com/destos/bonfo>
