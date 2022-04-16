@@ -7,6 +7,7 @@ test: format lint unittest
 format:
 	${prun} isort $(sources) tests
 	${prun} black $(sources) tests
+	${prun} autoflake8 -r -i $(sources) tests
 
 lint:
 	${prun} flake8 $(sources) tests

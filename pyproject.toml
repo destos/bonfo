@@ -134,9 +134,16 @@ use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
 skip_gitignore = true
-# remove_all_unused_imports = true
 # you can skip files as below
 #skip_glob = docs/conf.py
+
+[tool.autoflake8]
+in-place = true
+# remove-unused-variables = true
+remove-all-unused-imports = true
+ignore-init-module-imports = true
+recursive = true
+verbose = true
 
 [tool.pytest.ini_options]
 log_cli = true
