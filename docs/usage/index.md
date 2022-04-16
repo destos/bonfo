@@ -1,5 +1,6 @@
-To use Bonfo in a project
-
+---
+title: Bonfo usage
+---
 # As a module
 
 ``` python

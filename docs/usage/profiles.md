@@ -1,6 +1,6 @@
 Betaflight gives you access to a few customization profiles when configuring your flight controller. This allows you to set specific PIDs and rate groups for different scenarios. For example, you could set a pid and rate profile aside for testing purposes, or separate your racing and freestyle rates/PIDs into different profiles.
 
-Currently you're allowed **3 PID profiles** and **6 rate profiles**.
+Currently Betaflight allows for **3 PID profiles** and **6 rate profiles**.
 
 # Scripting
 
