@@ -1,5 +1,6 @@
 """Message structs that deal with the status of the board."""
 
+
 from construct import (
     Array,
     FixedSized,
@@ -17,7 +18,7 @@ from construct import (
 from bonfo.msp.structs.registry import msp_code
 
 from ..codes import MSP
-from .adapters import Int8ubPlusOne, RawSingle
+from .adapters import BTFLTimestamp, GitHash, Int8ubPlusOne, RawSingle
 
 ApiVersion = msp_code(
     MSP.API_VERSION,
@@ -39,10 +40,14 @@ FcVersion = msp_code(
     ),
 )
 
-BuildInfo = msp_code(MSP.BUILD_INFO, Struct())
+
+BuildInfo = msp_code(MSP.BUILD_INFO, Struct("date_time" / BTFLTimestamp, "git_hash" / GitHash))
+
 BoardInfo = msp_code(MSP.BOARD_INFO, Struct())
+
 Uid = msp_code(MSP.UID, Struct("uid" / Array(3, Int32ub)))
 AccTrim = msp_code(MSP.ACC_TRIM, Struct())
+
 Name = msp_code(MSP.NAME, Struct())
 
 Status = msp_code(

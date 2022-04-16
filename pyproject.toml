@@ -32,6 +32,7 @@ pyserial = "^3.5"
 pyserial-asyncio = "^0.6"
 dataclass-wizard = "^0.22"
 construct = "^2.10"
+arrow = "^1.2.2"
 click = { version = "^8.0", extras = ["cli"]}
 rich = { version = "^12.0", extras = ["cli"]}
 rich-click = { version = "^1.2", extras = ["cli"]}

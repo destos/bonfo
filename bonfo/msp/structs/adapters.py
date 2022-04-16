@@ -1,6 +1,7 @@
 from math import floor
 
-from construct import Adapter, Array, Byte, ExprAdapter, Int8ub, Int16ub, Validator, obj_
+import arrow
+from construct import Adapter, Array, Byte, ExprAdapter, Int8ub, Int16ub, PaddedString, Validator, obj_
 
 from bonfo.msp.codes import MSP
 
@@ -53,3 +54,20 @@ SelectRateProfile = RateProfileValidator(
         (obj_ ^ RATEPROFILE_MASK) - 1,
     )
 )
+
+
+DATE_TIME_LENGTH = 11 + 8
+GIT_HASH_LENGTH = 7
+
+
+class TimestampAdapter(Adapter):
+    def _decode(self, obj, context, path):
+        try:
+            return arrow.get(obj, 'MMM  D YYYYHH:mm:ss')
+        except:
+            return arrow.get(obj, 'MMM D YYYYHH:mm:ss')
+
+
+BTFLTimestamp = TimestampAdapter(PaddedString(DATE_TIME_LENGTH, "utf8"))
+
+GitHash = PaddedString(GIT_HASH_LENGTH, "utf8")
