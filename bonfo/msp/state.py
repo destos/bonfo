@@ -1,13 +1,12 @@
 """Data classes that store parsed information from a MSP message."""
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from dataclass_wizard import YAMLWizard
 
 
 @dataclass
-class Config:
+class BoardInfo:
     api_version: str = "0.0.0"
     flight_controller_identifier: str = ''
     flight_controller_version: str = ''
@@ -44,31 +43,6 @@ class Config:
     @property
     def is_inav(self):
         return "INAV" in self.flight_controller_identifier
-
-
-# State and others  potentially can be an enum?
-# Revamp how this is used in the FC msp client code and state + msp version switching
-@dataclass
-class DataHandler:
-    msp_version: int = 1
-    state: float = 0
-    flags: int = 0
-    message_direction: int = -1
-    code: int = 0
-    data_view: int = 0
-    message_length_expected: int = 0
-    message_length_received: int = 0
-    message_buffer: list = field(default_factory=lambda: [])
-    message_buffer_uint8_view: list = field(default_factory=lambda: [])
-    message_checksum: int = 0
-    messageIsJumboFrame: bool = False
-    crcError: bool = False
-    callbacks: list = field(default_factory=lambda: [])
-    packet_error: int = 0
-    unsupported: int = 0
-    last_received_timestamp: Optional[float] = None
-    listeners: list = field(default_factory=lambda: [])
-    # TODO: state property with data class wizard that tracks field changes and logs them?
 
 
 # @dataclass

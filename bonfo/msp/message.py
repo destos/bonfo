@@ -20,9 +20,9 @@ from construct import (
 )
 
 from .codes import frame_map
-from .structs.adapters import MessageType
-from .structs.expr import zero_none_len_
-from .structs.registry import struct_map
+from .fields.adapters import MessageType
+from .fields.base import fields_map
+from .fields.expr import zero_none_len_
 
 # fmt: off
 # MSP v1 message struct
@@ -45,7 +45,7 @@ Message = Struct(
     "packet" / RawCopy(Struct(
         "data_length" / Rebuild(Byte, zero_none_len_(this.fields)),
         "frame_id" / Mapping(MessageType, frame_map),
-        "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, struct_map))),  # type: ignore
+        "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, fields_map))),  # type: ignore
     )),
     "crc" / Hex(Checksum(
         Byte,
@@ -91,7 +91,7 @@ Data = Struct(
         Struct(
             "data_length" / Int8ub,
             "frame_id" / Mapping(MessageType, frame_map),
-            "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, struct_map))),  # type: ignore
+            "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, fields_map))),  # type: ignore
         )
     ),
     # "crc" / Byte

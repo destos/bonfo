@@ -1,3 +1,4 @@
+from .base import BaseFields
 from .config import CopyProfile, EepromWrite, RcTuning, RxConfig, SelectSetting
 from .status import (
     AccTrim,

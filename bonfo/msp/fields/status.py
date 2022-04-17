@@ -15,44 +15,73 @@ from construct import (
     this,
 )
 
-from bonfo.msp.structs.registry import msp_code
-
 from ..codes import MSP
+from ..fields.base import BaseFields, Direction
 from .adapters import BTFLTimestamp, GitHash, Int8ubPlusOne, RawSingle
 
-ApiVersion = msp_code(
-    MSP.API_VERSION,
-    Struct(
+
+class ApiVersion(BaseFields):
+    code = MSP.API_VERSION
+    direction = Direction.BOTH
+    struct = Struct(
         "msp_protocol" / Int8ub,
         "api_major" / Int8ub,
         "api_minor" / Int8ub,
-    ),
-)
+    )
 
-FcVariant = msp_code(MSP.FC_VARIANT, Struct("name" / PaddedString(4, "utf8")))
 
-FcVersion = msp_code(
-    MSP.FC_VERSION,
-    Struct(
+class FcVariant(BaseFields):
+    code = MSP.FC_VARIANT
+    direction = Direction.BOTH
+    struct = Struct("variant" / PaddedString(4, "utf8"))
+
+
+class FcVersion(BaseFields):
+    code = MSP.FC_VERSION
+    direction = Direction.BOTH
+    struct = Struct(
         "major" / Int8ub,
         "minor" / Int8ub,
         "patch" / Int8ub,
-    ),
-)
+    )
 
 
-BuildInfo = msp_code(MSP.BUILD_INFO, Struct("date_time" / BTFLTimestamp, "git_hash" / GitHash))
+class BuildInfo(BaseFields):
+    code = MSP.BUILD_INFO
+    direction = Direction.BOTH
+    struct = Struct("date_time" / BTFLTimestamp, "git_hash" / GitHash)
 
-BoardInfo = msp_code(MSP.BOARD_INFO, Struct())
 
-Uid = msp_code(MSP.UID, Struct("uid" / Array(3, Int32ub)))
-AccTrim = msp_code(MSP.ACC_TRIM, Struct())
+class BoardInfo(BaseFields):
+    code = MSP.BOARD_INFO
+    direction = Direction.BOTH
+    struct = Struct()
 
-Name = msp_code(MSP.NAME, Struct())
 
-Status = msp_code(
-    MSP.STATUS,
-    Struct(
+class Uid(BaseFields):
+    code = MSP.UID
+    direction = Direction.BOTH
+    struct = Struct("uid" / Array(3, Int32ub))
+
+
+class AccTrim(BaseFields):
+    code = MSP.ACC_TRIM
+    direction = Direction.BOTH
+    struct = Struct()
+
+
+class Name(BaseFields):
+    code = MSP.NAME
+    direction = Direction.BOTH
+    struct = Struct()
+
+
+class Status(BaseFields):
+    """Status is not Used"""
+
+    code = MSP.STATUS
+    direction = Direction.BOTH
+    struct = Struct(
         "cycle_time" / Int16ub,
         "i2c_error" / Int16ub,
         # sensor flags
@@ -61,14 +90,13 @@ Status = msp_code(
         "mode" / Int32ub,
         # selected profile
         "profile" / Int8ub,
-    ),
-)
-"""Status is not Used"""
+    )
 
 
-StatusEx = msp_code(
-    MSP.STATUS_EX,
-    Struct(
+class StatusEx(BaseFields):
+    code = MSP.STATUS_EX
+    direction = Direction.BOTH
+    struct = Struct(
         # cycle time in us
         "cycle_time" / Int16ub,
         # i2x error counter
@@ -88,7 +116,6 @@ StatusEx = msp_code(
             # SONAR = 1 << 4,
             # GPSMAG = 1 << 6,
         ),
-        # first 32bits of mode flags
         "mode" / Int32ub,
         # selected profile
         "pid_profile" / Int8ubPlusOne,
@@ -102,7 +129,6 @@ StatusEx = msp_code(
         "additional_mode_bytes" / Int8ub,
         # a continuation of the above mode flags
         "additional_mode" / FixedSized(this.additional_mode_bytes, GreedyBytes),
-        # Flags indicating why arming is currently disabled
         "arming_disable_flags"
         / FlagsEnum(
             Int32ub,
@@ -133,23 +159,24 @@ StatusEx = msp_code(
             MOTOR_PROTOCOL=1 << 24,
             ARM_SWITCH=1 << 25,
         ),
-        # configuration state ( reboot required )
         "config_state" / FlagsEnum(Int8ub, REBOOT=1 << 8),
-    ),
-)
+    )
 
-RawIMU = msp_code(
-    MSP.RAW_IMU,
-    Struct(
+
+class RawIMU(BaseFields):
+    code = MSP.RAW_IMU
+    direction = Direction.BOTH
+    struct = Struct(
         "accelerometer" / RawSingle,
         "gyroscope" / RawSingle,
         "magnetometer" / RawSingle,
-    ),
-)
+    )
 
-SensorAlignment = msp_code(
-    MSP.SENSOR_ALIGNMENT,
-    Struct(
+
+class SensorAlignment(BaseFields):
+    code = MSP.SENSOR_ALIGNMENT
+    direction = Direction.BOTH
+    struct = Struct(
         "align_gyro" / Int8ub,
         "align_acc" / Int8ub,
         "align_mag" / Int8ub,
@@ -160,8 +187,7 @@ SensorAlignment = msp_code(
         "gyro_to_use" / Int8ub,
         "gyro_1_align" / Int8ub,
         "gyro_2_align" / Int8ub,
-    ),
-)
+    )
 
 
 __all__ = [

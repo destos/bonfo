@@ -3,12 +3,16 @@
 from construct import Int8ub, Int16ub, Struct, Union
 
 from ..codes import MSP
-from ..structs.registry import msp_code
+from ..fields.base import BaseFields, Direction
 from .adapters import RcFloat, SelectPIDProfile, SelectRateProfile
 
-SelectSetting = msp_code(
-    MSP.SELECT_SETTING, Union(None, "pid_profile" / SelectPIDProfile, "rate_profile" / SelectRateProfile)
-)
+
+class SelectSetting(BaseFields):
+    code = MSP.SELECT_SETTING
+    direction = Direction.BOTH
+    struct = Union(None, "pid_profile" / SelectPIDProfile, "rate_profile" / SelectRateProfile)
+
+
 """Select between rate and PID profiles in one message.
 
 The first bit is a flag to allow switching between updating the PID profile

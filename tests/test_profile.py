@@ -1,8 +1,8 @@
 from construct import Container
 from pytest_mock import MockerFixture
+
 from bonfo.board import Profile
 from bonfo.msp.codes import MSP
-from bonfo.msp.structs.status import StatusEx
 
 
 def test_profile_str(mock_board) -> None:
