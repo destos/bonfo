@@ -2,7 +2,7 @@ import arrow
 import pytest
 from construct import ValidationError
 
-from bonfo.msp.fields.adapters import BTFLTimestamp, GitHash, SelectPIDProfile, SelectRateProfile
+from bonfo.msp.adapters import BTFLTimestamp, GitHash, SelectPIDProfile, SelectRateProfile
 
 
 def test_select_pid_profile_selector_byte():
@@ -39,5 +39,5 @@ def test_githash_adapter():
     assert GitHash.parse(b"bad01235678") == "bad0123"
 
 
-def xtest_select_rate_profile_selector_byte_parse():
-    assert SelectRateProfile.parse(b'\x85') == 6
+def test_select_rate_profile_selector_byte_parse():
+    assert SelectRateProfile.parse(b"\x85") == 6

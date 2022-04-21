@@ -1,80 +1,54 @@
+import asyncio
 import logging
-import unittest
-from multiprocessing.synchronize import BoundedSemaphore
 
-import pytest
+from serial_asyncio import serial
 
 from bonfo.board import Board, Profile
-from bonfo.msp.state import Config
+from bonfo.msp.fields import BoardInfo
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="function")
-def init_board_mocks(module_mocker):
-    init_serial = module_mocker.patch("bonfo.board.Board._init_serial").stub()
-    init_serial.is_open = True
-    module_mocker.patch("bonfo.board.Board.connect")
+async def xtest_board_init_values(mock_open_serial_connection, mock_send_receive) -> None:
+    board = Board("/dev/tty-mock")
+    await board.ready.wait()
+    mock_send_receive.side_effect = [(None, None)]
+    mock_open_serial_connection.assert_waited_once_with(
+        url="/dev/tty-mock",
+        baudrate=115200,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        timeout=0.1,
+        xonxoff=False,
+        rtscts=False,
+        dsrdtr=False,
+    )
+    assert board.device == "/dev/tty-mock"
+    assert board.baudrate == 115200
+    assert isinstance(board.info, BoardInfo)
+    assert isinstance(board.profile, Profile)
+    assert board.serial_trials == 100
+    assert isinstance(board.write_lock, asyncio.Event)
+    assert isinstance(board.read_lock, asyncio.Event)
+    # board._init_serial.assert_called_once_with("/dev/tty-mock", baudrate=115200)  # type: ignore
+    # board.connect.assert_not_called()  # type: ignore
 
 
-@pytest.fixture(scope="function")
-def init_msg_mocks(module_mocker):
-    module_mocker.patch("bonfo.board.Board.send_msg").stub()
-    module_mocker.patch("bonfo.board.Board.receive_msg").stub()
+def xtest_board_context_manager(self) -> None:
+    with Board("/dev/tty-mock").connect() as board:
+        assert board.serial_trials == 100
+        board.connect.assert_called_once_with(trials=100)
 
 
-@pytest.mark.usefixtures("init_board_mocks")
-class TestBoardInit(unittest.TestCase):
-    def test_board_init_values(self) -> None:
-        board = Board("/dev/tty-mock")
-        self.assertIsInstance(board.conf, Config)
-        self.assertEqual(board.serial_trials, 100)
-        self.assertIsInstance(board.serial_write_lock, BoundedSemaphore)
-        self.assertIsInstance(board.serial_read_lock, BoundedSemaphore)
-        board._init_serial.assert_called_once_with("/dev/tty-mock", baudrate=115200)  # type: ignore
-        board.connect.assert_not_called()  # type: ignore
-
-    def test_board_context_manager(self) -> None:
-        with Board("/dev/tty-mock") as board:
-            self.assertEqual(board.serial_trials, 100)
-            board.connect.assert_called_once_with(trials=100)
-
-    def test_board_context_manager_trials_changed(self) -> None:
-        with Board("/dev/tty-mock", trials=2) as board:
-            self.assertEqual(board.serial_trials, 2)
-            board.connect.assert_called_once_with(trials=2)
+def xtest_board_context_manager_trials_changed(self) -> None:
+    with Board("/dev/tty-mock", trials=2) as board:
+        assert board.serial_trials == 2
+        board.connect.assert_called_once_with(trials=2)
 
 
-# @pytest.mark.usefixtures("init_board_mocks", "init_msg_mocks")
-# class TestBoardProfile(unittest.TestCase):
-
-#     @pytest.fixture(autouse=True)
-#     def test_as_property(self, mocker):
-#         board = mocker.stub()
-#         board.profile = Profile.as_property(board, (1, 6))
-
-#         self.assertEqual(board.profile, 1)
-
-
-@pytest.mark.usefixtures("init_board_mocks")
-class TestBoardProfileManager(unittest.TestCase):
-    def test_initial_state(self) -> None:
-        board = Board("/dev/tty-mock")
-        self.assertIsInstance(board.profile, Profile)
-        self.assertEqual(board.profile.pid, 1)
-        self.assertEqual(board.profile.rate, 1)
-        self.assertFalse(board.profile.revert_on_exit)
-        self.assertEqual(board.profile.board, board)
-
-    def xtest_profile_manager_pid_side_effects(self) -> None:
-        board = Board("/dev/tty-mock")
-        self.assertEqual(board.profile.pid, 1)
-        self.assertEqual(board.profile.rate, 1)
-        self.assertFalse(board.profile.revert_on_exit)
-        with board.profile(pid_profile=3, revert_on_exit=True):
-            self.assertEqual(board.profile.pid, 3)
-            self.assertEqual(board.profile.rate, 1)
-            self.assertTrue(board.profile.revert_on_exit)
-
-    def xtest_profile_manager_connects(self) -> None:
-        pass
+async def xtest_board_connect(mock_open_serial_connection, mock_send_receive):
+    mock_send_receive.return_value = (None, None)
+    async with Board("/dev/tty").connect() as board:
+        assert board.connected.is_set() is True
+        assert board.ready.is_set() is True

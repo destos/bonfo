@@ -4,16 +4,19 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Tuple, Union
 
 from construct import Container
 from serial_asyncio import open_serial_connection, serial
 
+from bonfo.msp.fields.base import Direction
+from bonfo.msp.fields.pids import MSPFields
+
 from .msp.codes import MSP
+from .msp.fields import BoardInfo
 from .msp.message import Data, Preamble
-from .msp.state import Config, RcTuning, RxConfig
 from .msp.utils import msg_data, out_message_builder
 
 logger = logging.getLogger(__name__)
@@ -37,14 +40,15 @@ class Profile:
 
     # pid: int
     # rate: int
-    _pid = 1
-    _rate = 1
+    # TODO: move to property classes that have individual synced states and setters
+    _pid: int = field(default=1, init=False, repr=False)
+    _rate: int = field(default=1, init=False, repr=False)
 
     # Track profile changes before they are applied
-    _profile_tracker = (1, 1)
+    _profile_tracker: tuple = field(default_factory=lambda: (1, 1), repr=False)
 
     # hold previous profiles for reversion purposes
-    _revert_to_profiles = (1, 1)
+    _revert_to_profiles: tuple = field(default_factory=lambda: (1, 1), repr=False)
 
     class SyncedState(Enum):
         """Local synced/saved status for selected profiles."""
@@ -173,19 +177,20 @@ class Board:
         if loop is None:
             loop = asyncio.get_running_loop()
 
-        # found board configuration
-        self.conf = Config()
+        # found board info
+        self.info = BoardInfo()
         # rate and pid profile manager
-        self.profile = Profile(board=self)
-        self._ready_task(self.profile._check_connection)
+        # self.profile = Profile(board=self)
+        # self._ready_task(self.profile._check_connection)
 
         # TODO: register configs for saving/applying?
-        self.rx_conf = RxConfig()
-        self.rc_tuning = RcTuning()
+        # self.rx_conf = RxConfig()
+        # self.rc_tuning = RcTuning()
 
         # Serial options/state
         self.serial_trials = trials
         self._ready_task(self.open_serial)
+        self._ready_task(self.get_board_info)
         loop.create_task(self._run_ready_tasks())
 
     def _ready_task(self, coro):
@@ -194,6 +199,9 @@ class Board:
     async def _run_ready_tasks(self):
         await asyncio.gather(*self._ready_tasks)
         self.ready.set()
+
+    async def get_board_info(self):
+        pass
 
     async def open_serial(self, baudrate: Union[int, None] = None, **kwargs):
         baudrate = baudrate or self.baudrate
@@ -230,18 +238,18 @@ class Board:
         self.connected.clear()
         # self.loop_task.cancel()
 
-    async def send_msg(self, code: MSP, data=None, blocking=True, timeout=-1):
+    async def send_msg(self, code: MSP, fields=None, blocking=True, timeout=-1):
         """Generates and sends a message with the passed code and data.
 
         Args:
             code (MSP): MSP code enum or code integer
-            data (Any supported message struct, optional): structured data to send,
+            fields (Any supported message struct, optional): structured data to send,
                 converted to binary by struct. Defaults to None.
 
         Returns:
             int: Total bytes sent
         """
-        buff = out_message_builder(code, fields=data)
+        buff = out_message_builder(code, fields=fields)
 
         async with self.write_lock:
             try:
@@ -285,3 +293,26 @@ class Board:
         # TODO: Use an asyncio Queue to make sure the send/receive happens consecutively?
         await self.send_msg(code, data=data)
         return await self.receive_msg()
+
+    async def get(self, fields: MSPFields):
+        fields.struct
+        assert fields.direction in [Direction.OUT, Direction.BOTH]
+        await self.send_msg(fields.get_code)
+        # TODO: assert code received is the same get_code
+        return await self.receive_msg()
+
+    async def set(self, fields: MSPFields):
+        fields.struct
+        assert fields.direction in [Direction.IN, Direction.BOTH]
+        await self.send_msg(fields.set_code, data=fields)
+        # TODO: assert code received is the same get_code
+        return await self.receive_msg()
+
+    async def __add__(self, other):
+        if issubclass(other, MSPFields):
+            return await self.set(other)
+
+    async def __sub__(self, other):
+        if issubclass(other, MSPFields):
+            return await self.get(other)
+

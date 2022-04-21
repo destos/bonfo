@@ -9,3 +9,4 @@
 * Mix and match saved configurations
 * Automated tuning steps
 * Message result caching and invalidation timeout
+* Passthrough to betaflight CLI

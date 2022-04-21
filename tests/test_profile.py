@@ -6,7 +6,7 @@ from bonfo.msp.codes import MSP
 
 
 def test_profile_str(mock_board) -> None:
-    "String cast of profile object."
+    """String cast of profile object."""
     profile = Profile(board=mock_board)
     profile._pid = 2
     profile._rate = 3
@@ -14,7 +14,7 @@ def test_profile_str(mock_board) -> None:
 
 
 def test_profile_pid_attr(mock_board) -> None:
-    "Side effects of changing the pid profile via its attribute."
+    """Side effects of changing the pid profile via its attribute."""
     profile = Profile(board=mock_board)
     assert profile.pid == 1
     assert profile._state == Profile.SyncedState.UNFETCHED
@@ -26,7 +26,7 @@ def test_profile_pid_attr(mock_board) -> None:
 
 
 def test_profile_rate_attr(mock_board) -> None:
-    "Side effects of changing the rate profile via its attribute."
+    """Side effects of changing the rate profile via its attribute."""
     profile = Profile(board=mock_board)
     assert profile.rate == 1
     assert profile._state == Profile.SyncedState.UNFETCHED
@@ -38,7 +38,7 @@ def test_profile_rate_attr(mock_board) -> None:
 
 
 async def xtest_board_ready_wait(mock_board):
-    "Board ready event halts profile context manager."
+    """Board ready event halts profile context manager."""
     # Make sure we halt on a future await wait()
     mock_board.ready.clear()
     profile = Profile(board=mock_board)
@@ -47,7 +47,7 @@ async def xtest_board_ready_wait(mock_board):
 
 
 async def test_profile_manager_with_no_args(mock_board, mocker: MockerFixture) -> None:
-    "If a profile context manager is made with no args do nothing."
+    """If a profile context manager is made with no args do nothing."""
     apple_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = []
@@ -68,7 +68,7 @@ async def test_profile_manager_with_no_args(mock_board, mocker: MockerFixture) -
 
 
 async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture) -> None:
-    "Side effects of providing a different pid and rate in the async profile manager"
+    """Side effects of providing a different pid and rate in the async profile manager."""
     apple_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = [
@@ -99,7 +99,7 @@ async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture
 
 
 async def test_profile_manager_with_revert_on_exit(mock_board, mocker: MockerFixture) -> None:
-    "revert_on_exit flag reverts to previous profiles on exit of manager."
+    """revert_on_exit flag reverts to previous profiles on exit of manager."""
     apple_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = [
@@ -139,7 +139,7 @@ async def test_profile_manager_with_revert_on_exit(mock_board, mocker: MockerFix
 
 
 async def test_set_profiles_from_board(mock_board):
-    "Sync down the current board profiles and set to local attributes."
+    """Sync down the current board profiles and set to local attributes."""
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = [
         (None, Container(pid_profile=3, rate_profile=6)),
@@ -155,7 +155,7 @@ async def test_set_profiles_from_board(mock_board):
 
 
 async def test_send_pid_to_board(mock_board):
-    "Send the selected PID to the board, should not change local values."
+    """Send the selected PID to the board, should not change local values."""
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = [
         (None, None),
@@ -169,7 +169,7 @@ async def test_send_pid_to_board(mock_board):
 
 
 async def test_send_rate_to_board(mock_board):
-    "Send the selected rate to the board, should not change local values."
+    """Send the selected rate to the board, should not change local values."""
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = [
         (None, None),
@@ -183,7 +183,7 @@ async def test_send_rate_to_board(mock_board):
 
 
 async def test_apply_changes_applied(mock_board, mocker: MockerFixture):
-    "Full apply test."
+    """Full apply test."""
     mock_send_pid = mocker.patch("bonfo.board.Profile._send_pid_to_board")
     mock_send_rate = mocker.patch("bonfo.board.Profile._send_rate_to_board")
     mock_set_profiles = mocker.patch.object(Profile, "_set_profiles_from_board", return_value=(2, 2))
@@ -199,7 +199,7 @@ async def test_apply_changes_applied(mock_board, mocker: MockerFixture):
 
 
 async def test_apply_changes_bad_state(mock_board, mocker: MockerFixture):
-    "Profile is in bad state to apply"
+    """Profile is in bad state to apply."""
     mock_send_pid = mocker.patch("bonfo.board.Profile._send_pid_to_board")
     mock_send_rate = mocker.patch("bonfo.board.Profile._send_rate_to_board")
     mock_set_profiles = mocker.patch.object(Profile, "_set_profiles_from_board", return_value=(2, 2))
@@ -216,7 +216,7 @@ async def test_apply_changes_bad_state(mock_board, mocker: MockerFixture):
 
 
 async def test_apply_changes_different_board_result(mock_board, mocker: MockerFixture):
-    "Profiles from board differ"
+    """Profiles from board differ."""
     mock_send_pid = mocker.patch("bonfo.board.Profile._send_pid_to_board")
     mock_send_rate = mocker.patch("bonfo.board.Profile._send_rate_to_board")
     mock_set_profiles = mocker.patch.object(Profile, "_set_profiles_from_board", return_value=(2, 4))

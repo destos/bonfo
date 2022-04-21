@@ -18,6 +18,7 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from bonfo.board import Board
 from bonfo.msp.codes import MSP
+from bonfo.msp.fields.pids import PidAdvanced
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -95,7 +96,7 @@ def cli(ctx):
 
 @cli.command()
 @bonfo_context
-def check_context(ctx):
+def check_context(ctx: BonfoContext):
     """Output current context values."""
     print(ctx.board)
     print(ctx.port)
@@ -119,24 +120,13 @@ async def test(ctx: BonfoContext):
     if ctx.board is None:
         return click.echo("No port selected")
     async with ctx.board.connect() as board:
-        async with board.profile(rate=3, pid=2) as profile:
-            print("pid", profile.pid)
-            print("rate", profile.rate)
-            print("setting pid to 1")
-            profile.pid = 1
-            print("pid", profile.pid)
-            print("setting rate to 1")
-            profile.rate = 1
-            print("rate", profile.rate)
-            print("applying changes")
-            await profile.apply_changes()
-            print("pid", profile.pid)
-            print("rate", profile.rate)
+        test1 = await board.get(PidAdvanced)
+        click.echo(test1)
 
 
 @cli.group("profiles")
 @bonfo_context
-def profiles(ctx):
+def profiles(ctx: BonfoContext):
     pass
 
 
@@ -170,9 +160,32 @@ async def set(ctx: BonfoContext, pid, rate):
         click.echo(f"After: {board.profile}")
 
 
+@cli.group("config")
+@bonfo_context
+def config(ctx: BonfoContext):
+    """Manage and apply configuration files."""
+    pass
+
+
+@config.command()
+@bonfo_context
+@click.option("-c", "--check", type=bool)
+@click.argument("file", type=click.File("r"))
+def apply(ctx: BonfoContext, check, file):
+    """Apply passed configuration."""
+    pass
+    # click.echo(BoardConf.from_yaml(file.read()))
+
+
+@config.command()
+@bonfo_context
+@click.argument("file", type=click.Path(dir_okay=False))
+def create(ctx: BonfoContext, file):
+    pass
+
 @cli.command()
 @bonfo_context
-@click.option('-s', '--include-links', is_flag=True, help='include entries that are symlinks to real devices')
+@click.option("-s", "--include-links", is_flag=True, help="include entries that are symlinks to real devices")
 def set_port(cxt: BonfoContext, include_links, err=True):
     """Set the default port to use during this session."""
     # TODO: let user know they are changing the port from the context if it changes

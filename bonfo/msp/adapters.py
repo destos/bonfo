@@ -63,9 +63,12 @@ GIT_HASH_LENGTH = 7
 class TimestampAdapter(Adapter):
     def _decode(self, obj, context, path):
         try:
-            return arrow.get(obj, 'MMM  D YYYYHH:mm:ss')
-        except:
-            return arrow.get(obj, 'MMM D YYYYHH:mm:ss')
+            return arrow.get(obj, "MMM  D YYYYHH:mm:ss")
+        except arrow.ParserError:
+            return arrow.get(obj, "MMM D YYYYHH:mm:ss")
+
+    def _encode(self, obj, context, path):
+        return arrow.get(obj).format("MMM D YYYYHH:mm:ss")
 
 
 BTFLTimestamp = TimestampAdapter(PaddedString(DATE_TIME_LENGTH, "utf8"))
