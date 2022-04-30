@@ -11,7 +11,7 @@ format:
 
 lint:
 	${prun} flake8 $(sources) tests
-	${prun} mypy $(sources) tests
+	${prun} mypy $(sources)
 
 unittest:
 	${prun} pytest
@@ -31,5 +31,5 @@ clean:
 docs:
 	${prun} mkdocs build
 
-docs-test:
+docs-serve:
 	${prun} mkdocs serve

@@ -1,6 +1,6 @@
 import logging
 
-from construct import Checksum, ChecksumError, IfThenElse, Optional, Struct, Switch
+from construct import Checksum, ChecksumError, IfThenElse, Optional, Switch
 
 from bonfo.msp.codes import MSP
 from bonfo.msp.versions import MSPVersions
@@ -8,7 +8,7 @@ from bonfo.msp.versions import MSPVersions
 logger = logging.getLogger(__name__)
 
 
-class MSPVersion(IfThenElse):
+class MSPVersion(IfThenElse):  # type:ignore
     def __init__(self, thensubcon, version_added: MSPVersions, elsesubcon=None) -> None:
         self.version_added = version_added
         if elsesubcon is None:
@@ -36,7 +36,7 @@ class LenientChecksum(Checksum):
             return self.checksumfield._parsereport(stream, context, path)
 
 
-def FrameStruct(frame_id: MSP) -> Struct:
+def FrameStruct(frame_id: MSP):
     from .fields.base import build_translator_map
 
     """FrameStruct wraps a optional switch so as to not cause errors when no data is passed."""

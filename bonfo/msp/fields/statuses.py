@@ -9,7 +9,6 @@ from arrow import Arrow
 from construct import (
     Array,
     FixedSized,
-    FlagsEnum,
     GreedyBytes,
     Int8ub,
     Int16ub,
@@ -149,73 +148,68 @@ class Status(MSPFields, get_code=MSP.STATUS):
     profile: int = csfield(Int8ub)
 
 
+class ActiveSensorsFlags(FlagsEnumBase):
+    # bit enum position + flag shift
+    ACC = 1 << 1
+    BARO = 1 << 2 << 1
+    MAG = 1 << 3 << 2
+    GPS = 1 << 5 << 3
+    RANGEFINDER = 1 << 4 << 4
+    GYRO = 1 << 0 << 5
+    # v2 sensors
+    # SONAR = 1 << 4,
+    # GPSMAG = 1 << 6,
+
+
+class ArmingDisableFlags(FlagsEnumBase):
+    NO_GYRO = 1 << 0
+    FAILSAFE = 1 << 1
+    RX_FAILSAFE = 1 << 2
+    BAD_RX_RECOVERY = 1 << 3
+    BOXFAILSAFE = 1 << 4
+    RUNAWAY_TAKEOFF = 1 << 5
+    CRASH_DETECTED = 1 << 6
+    THROTTLE = 1 << 7
+    ANGLE = 1 << 8
+    BOOT_GRACE_TIME = 1 << 9
+    NOPREARM = 1 << 10
+    LOAD = 1 << 11
+    CALIBRATING = 1 << 12
+    CLI = 1 << 13
+    CMS_MENU = 1 << 14
+    BST = 1 << 15
+    MSP = 1 << 16
+    PARALYZE = 1 << 17
+    GPS = 1 << 18
+    RESC = 1 << 19
+    RPMFILTER = 1 << 20
+    REBOOT_REQUIRED = 1 << 21
+    DSHOT_BITBANG = 1 << 22
+    ACC_CALIBRATION = 1 << 23
+    MOTOR_PROTOCOL = 1 << 24
+    ARM_SWITCH = 1 << 25
+
+
+class ConfigStateFlags(FlagsEnumBase):
+    REBOOT = 1 << 8
+
+
 @dataclass
 class StatusEx(MSPFields, get_code=MSP.STATUS_EX):
-    # cycle time in us
-    cycle_time: int = csfield(Int16ub)
-    # i2x error counter
-    i2c_error: int = csfield(Int16ub)
-    # sensor flags
-    active_sensors: int = csfield(
-        FlagsEnum(
-            Int16ul,
-            # bit enum position + flag shift
-            ACC=1 << 1,
-            BARO=1 << 2 << 1,
-            MAG=1 << 3 << 2,
-            GPS=1 << 5 << 3,
-            RANGEFINDER=1 << 4 << 4,
-            GYRO=1 << 0 << 5,
-            # v2 sensors
-            # SONAR = 1 << 4,
-            # GPSMAG = 1 << 6,
-        )
-    )
+    cycle_time: int = csfield(Int16ub, "cycle time in us")
+    i2c_error: int = csfield(Int16ub, "i2x error counter")
+    active_sensors: ActiveSensorsFlags = csfield(TFlagsEnum(Int16ul, ActiveSensorsFlags), "sensor flags")
     mode: int = csfield(Int32ub)
-    # selected profile
-    pid_profile: int = csfield(Int8ubPlusOne)
-    # load percent
-    cpuload: int = csfield(Int16ub)
-    # Total number of profiles
-    profile_count: int = csfield(Int8ub)
-    # Rate profile index
-    rate_profile: int = csfield(Int8ubPlusOne)
-    # length of additional flag bytes
-    additional_mode_bytes: int = csfield(Int8ub)
-    # a continuation of the above mode flags
-    additional_mode: int = csfield(FixedSized(this.additional_mode_bytes, GreedyBytes))
-    arming_disable_flags: int = csfield(
-        FlagsEnum(
-            Int32ub,
-            NO_GYRO=1 << 0,
-            FAILSAFE=1 << 1,
-            RX_FAILSAFE=1 << 2,
-            BAD_RX_RECOVERY=1 << 3,
-            BOXFAILSAFE=1 << 4,
-            RUNAWAY_TAKEOFF=1 << 5,
-            CRASH_DETECTED=1 << 6,
-            THROTTLE=1 << 7,
-            ANGLE=1 << 8,
-            BOOT_GRACE_TIME=1 << 9,
-            NOPREARM=1 << 10,
-            LOAD=1 << 11,
-            CALIBRATING=1 << 12,
-            CLI=1 << 13,
-            CMS_MENU=1 << 14,
-            BST=1 << 15,
-            MSP=1 << 16,
-            PARALYZE=1 << 17,
-            GPS=1 << 18,
-            RESC=1 << 19,
-            RPMFILTER=1 << 20,
-            REBOOT_REQUIRED=1 << 21,
-            DSHOT_BITBANG=1 << 22,
-            ACC_CALIBRATION=1 << 23,
-            MOTOR_PROTOCOL=1 << 24,
-            ARM_SWITCH=1 << 25,
-        )
+    pid_profile: int = csfield(Int8ubPlusOne, "Selected pid profile")
+    cpuload: int = csfield(Int16ub, "Load percent")
+    profile_count: int = csfield(Int8ub, "Total number of profiles")
+    rate_profile: int = csfield(Int8ubPlusOne, "Rate profile index")
+    additional_mode_bytes: int = csfield(Int8ub, "length of additional flag bytes")
+    additional_mode: bytes = csfield(
+        FixedSized(this.additional_mode_bytes, GreedyBytes), "a continuation of the above mode flags"
     )
-    config_state: int = csfield(FlagsEnum(Int8ub, REBOOT=1 << 8))
+    arming_disable_flags: ArmingDisableFlags = csfield(TFlagsEnum(Int32ub, ArmingDisableFlags))
+    config_state: ConfigStateFlags = csfield(TFlagsEnum(Int8ub, ConfigStateFlags))
 
 
 @dataclass

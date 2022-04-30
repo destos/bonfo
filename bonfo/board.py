@@ -6,10 +6,10 @@ import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Coroutine, List, Optional, Tuple, Type, Union
+from typing import AsyncIterator, Coroutine, List, Optional, Tuple, Type, Union
 
 from construct import Container
-from docutils import VersionInfo
+from semver import VersionInfo
 from serial_asyncio import open_serial_connection, serial
 
 from .msp.codes import MSP
@@ -110,7 +110,9 @@ class Profile:
         await self._set_profiles_from_board()
 
     @asynccontextmanager
-    async def __call__(self, pid: Optional[int] = None, rate: Optional[int] = None, revert_on_exit=False):
+    async def __call__(
+        self, pid: Optional[int] = None, rate: Optional[int] = None, revert_on_exit=False
+    ) -> AsyncIterator["Profile"]:
         self._state = self.SyncedState.FETCHING
 
         # wait here till the board is ready
@@ -122,7 +124,7 @@ class Profile:
         self._revert_to_profiles = (self.pid, self.rate)
         logger.debug("Setting _revert_to_profiles to: %s", self._revert_to_profiles)
 
-        (self.pid, self.rate) = (pid, rate)
+        (self.pid, self.rate) = (pid, rate)  # type:ignore
 
         await self.apply_changes()
 
@@ -208,18 +210,18 @@ class Board:
         # TODO: handle assigning board to custom profiles
         if self.profile is None:
             self.profile = Profile(board=self)
-        self._ready_task(self.profile._check_connection)
+        self._ready_task(self.profile._check_connection())
 
         # TODO: register configs for saving/applying?
         # self.rx_conf = RxConfig()
         # self.rc_tuning = RcTuning()
 
-        self._ready_task(self.open_serial)
-        self._ready_task(self.get_board_info)
+        self._ready_task(self.open_serial())
+        self._ready_task(self.get_board_info())
         self.loop.create_task(self._run_ready_tasks())
 
     def _ready_task(self, coro: Coroutine) -> None:
-        self._ready_tasks.append(coro())
+        self._ready_tasks.append(coro)
 
     async def _run_ready_tasks(self) -> None:
         await asyncio.gather(*self._ready_tasks)
@@ -247,16 +249,15 @@ class Board:
     @property
     def msp_version(self) -> Optional[VersionInfo]:
         try:
-            return self.info.api.semver
+            return self.info.api.semver  # type:ignore
         except AttributeError:
             return None
 
-    async def open_serial(self, baudrate: Optional[int] = None, **kwargs) -> None:
-        baudrate = baudrate or self.baudrate
+    async def open_serial(self, **kwargs) -> None:
         try:
             self.reader, self.writer = await open_serial_connection(
                 url=self.device,
-                baudrate=baudrate,
+                baudrate=self.baudrate,
                 bytesize=serial.EIGHTBITS,
                 parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE,
@@ -273,7 +274,7 @@ class Board:
         logger.info("connected to serial device %s", self.device)
 
     @asynccontextmanager
-    async def connect(self):
+    async def connect(self) -> AsyncIterator["Board"]:
         try:
             await self.ready.wait()
             yield self
@@ -349,6 +350,7 @@ class Board:
 
     async def get(self, fields: Type[MSPFields]):
         assert fields.get_direction() in [Direction.OUT, Direction.BOTH]
+        assert fields.get_code is not None
 
         async with self.message_lock:
             await self.send_msg(fields.get_code)
@@ -357,6 +359,7 @@ class Board:
 
     async def set(self, fields: Type[MSPFields]):
         assert fields.get_direction() in [Direction.IN, Direction.BOTH]
+        assert fields.set_code is not None
 
         async with self.message_lock:
             await self.send_msg(fields.set_code, fields=fields)
