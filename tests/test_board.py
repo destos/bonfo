@@ -42,9 +42,9 @@ def xtest_board_context_manager(self) -> None:
 
 
 def xtest_board_context_manager_trials_changed(self) -> None:
-    with Board("/dev/tty-mock", trials=2) as board:
+    with Board("/dev/tty-mock", serial_trails=2).connect() as board:
         assert board.serial_trials == 2
-        board.connect.assert_called_once_with(trials=2)
+        board.connect.assert_called_once_with(serial_trails=2)
 
 
 async def xtest_board_connect(mock_open_serial_connection, mock_send_receive):

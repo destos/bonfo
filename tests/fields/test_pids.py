@@ -11,15 +11,15 @@ from tests.utils import minus_preamble
 
 
 def test_pid_coefficients():
-    assert PidCoefficients.direction == Direction.OUT
+    assert PidCoefficients.get_direction() == Direction.OUT
     assert PidCoefficients.get_code == MSP.PID
     assert PidCoefficients.set_code is None
-    assert isinstance(PidCoefficients.struct, DataclassStruct)
+    assert isinstance(PidCoefficients.get_struct(), DataclassStruct)
 
 
 def test_pid_coefficients_parse():
     data_bytes = minus_preamble(messages.pid)
-    data = PidCoefficients.struct.parse(data_bytes)
+    data = PidCoefficients.get_struct().parse(data_bytes)
     assert isinstance(data, PidCoefficients)
     assert data == PidCoefficients(
         pids=ListContainer(
@@ -37,7 +37,7 @@ def test_pid_coefficients_parse():
 def test_pid_parse_and_build_non_destructive():
     """Pid advanced generated struct should be non-destructive to bytestring."""
     data_bytes = minus_preamble(messages.pid)
-    struct = PidCoefficients.struct
+    struct = PidCoefficients.get_struct()
     data = struct.parse(data_bytes)
     assert isinstance(data, PidCoefficients)
     output_data_bytes = struct.build(data)
@@ -45,15 +45,15 @@ def test_pid_parse_and_build_non_destructive():
 
 
 def test_pid_advanced():
-    assert PidAdvanced.direction == Direction.BOTH
+    assert PidAdvanced.get_direction() == Direction.BOTH
     assert PidAdvanced.get_code == MSP.PID_ADVANCED
     assert PidAdvanced.set_code == MSP.SET_PID_ADVANCED
-    assert isinstance(PidAdvanced.struct, DataclassStruct)
+    assert isinstance(PidAdvanced.get_struct(), DataclassStruct)
 
 
 def xtest_pid_advanced_parse():
     data_bytes = minus_preamble(messages.pid_advanced)
-    data = PidAdvanced.struct.parse(data_bytes, msp=MSPVersions.V1_43)
+    data = PidAdvanced.get_struct().parse(data_bytes, msp=MSPVersions.V1_43)
     assert isinstance(data, PidAdvanced)
     # TODO: don't require unused parameters fields
     assert data == PidAdvanced(
@@ -97,7 +97,7 @@ def xtest_pid_advanced_parse():
 def test_pid_advanced_parse_and_build_non_destructive():
     """Pi aAdvanced generated struct should be non-destructive to bytescring."""
     data_bytes = minus_preamble(messages.pid_advanced)
-    struct = PidAdvanced.struct
+    struct = PidAdvanced.get_struct()
     data = struct.parse(data_bytes, msp=MSPVersions.V1_43)
     assert isinstance(data, PidAdvanced)
     output_data_bytes = struct.build(data, msp=MSPVersions.V1_43)

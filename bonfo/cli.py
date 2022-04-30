@@ -18,7 +18,7 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from bonfo.board import Board
 from bonfo.msp.codes import MSP
-from bonfo.msp.fields.pids import PidAdvanced
+from bonfo.msp.fields.statuses import Name
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -108,7 +108,7 @@ def connect(ctx: BonfoContext):
     """Connect to the FC board."""
     if ctx.board is None:
         return click.echo("No port selected")
-    with ctx.board as board:
+    with ctx.board.connect() as board:
         click.echo(board.send_msg(MSP.API_VERSION))
 
 
@@ -120,8 +120,17 @@ async def test(ctx: BonfoContext):
     if ctx.board is None:
         return click.echo("No port selected")
     async with ctx.board.connect() as board:
-        test1 = await board.get(PidAdvanced)
-        click.echo(test1)
+        pass
+        # test1 = await board.get(PidAdvanced)
+        # print(board.info)
+        # print(str(board.profile))
+        # _, status = await board.get(StatusEx)
+        # print(status)
+        # print(Name(name="bobby").build())
+        _, name = await board.set(Name(name="robby"))
+        print(name)
+        _, name = await board.get(Name)
+        print(name)
 
 
 @cli.group("profiles")
@@ -182,6 +191,11 @@ def apply(ctx: BonfoContext, check, file):
 @click.argument("file", type=click.Path(dir_okay=False))
 def create(ctx: BonfoContext, file):
     pass
+    # BoardConf(
+    #     pid_profiles={1: PidTranslator(test_one=123, test2=123), 2: PidTranslator(test_one=3, test2=4)},
+    #     # rates=[RateTranslator(profile=1, yaw=123)]
+    # ).to_yaml_file(file)
+
 
 @cli.command()
 @bonfo_context

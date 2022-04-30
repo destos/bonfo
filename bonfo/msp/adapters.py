@@ -61,13 +61,13 @@ GIT_HASH_LENGTH = 7
 
 
 class TimestampAdapter(Adapter):
-    def _decode(self, obj, context, path):
+    def _decode(self, obj, context, path) -> arrow.Arrow:
         try:
             return arrow.get(obj, "MMM  D YYYYHH:mm:ss")
         except arrow.ParserError:
             return arrow.get(obj, "MMM D YYYYHH:mm:ss")
 
-    def _encode(self, obj, context, path):
+    def _encode(self, obj, context, path) -> str:
         return arrow.get(obj).format("MMM D YYYYHH:mm:ss")
 
 

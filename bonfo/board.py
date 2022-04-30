@@ -6,16 +6,27 @@ import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Tuple, Union
+from typing import Coroutine, List, Optional, Tuple, Type, Union
 
 from construct import Container
+from docutils import VersionInfo
 from serial_asyncio import open_serial_connection, serial
 
-from bonfo.msp.fields.base import Direction
-from bonfo.msp.fields.pids import MSPFields
-
 from .msp.codes import MSP
-from .msp.fields import BoardInfo
+from .msp.fields.base import Direction
+from .msp.fields.config import SelectPID, SelectRate
+from .msp.fields.pids import MSPFields
+from .msp.fields.statuses import (
+    ApiVersion,
+    BoardInfo,
+    BuildInfo,
+    CombinedBoardInfo,
+    FcVariant,
+    FcVersion,
+    Name,
+    StatusEx,
+    Uid,
+)
 from .msp.message import Data, Preamble
 from .msp.utils import msg_data, out_message_builder
 
@@ -35,6 +46,8 @@ class Profile:
     """
 
     board: "Board"
+    # pid: int = 1
+    # rate: int = 1
     # pid: Annotated[int, field(default=1)]
     # rate: Annotated[int, field(default=1)]
 
@@ -45,10 +58,10 @@ class Profile:
     _rate: int = field(default=1, init=False, repr=False)
 
     # Track profile changes before they are applied
-    _profile_tracker: tuple = field(default_factory=lambda: (1, 1), repr=False)
+    _profile_tracker: Tuple[int, int] = field(default_factory=lambda: (1, 1), repr=False)
 
     # hold previous profiles for reversion purposes
-    _revert_to_profiles: tuple = field(default_factory=lambda: (1, 1), repr=False)
+    _revert_to_profiles: Tuple[int, int] = field(default_factory=lambda: (1, 1), repr=False)
 
     class SyncedState(Enum):
         """Local synced/saved status for selected profiles."""
@@ -70,7 +83,7 @@ class Profile:
         return self._pid
 
     @pid.setter
-    def pid(self, pid: Union[int, None]) -> None:
+    def pid(self, pid: Optional[int]) -> None:
         if pid is None:
             return
         assert pid in range(1, 4), "PID out of range"
@@ -84,7 +97,7 @@ class Profile:
         return self._rate
 
     @rate.setter
-    def rate(self, rate: Union[int, None]) -> None:
+    def rate(self, rate: Optional[int]) -> None:
         if rate is None:
             return
         assert rate in range(1, 7), "Rate out of range"
@@ -97,7 +110,7 @@ class Profile:
         await self._set_profiles_from_board()
 
     @asynccontextmanager
-    async def __call__(self, pid: Union[int, None] = None, rate: Union[int, None] = None, revert_on_exit=False):
+    async def __call__(self, pid: Optional[int] = None, rate: Optional[int] = None, revert_on_exit=False):
         self._state = self.SyncedState.FETCHING
 
         # wait here till the board is ready
@@ -122,18 +135,23 @@ class Profile:
             await self.apply_changes()
 
     async def _set_profiles_from_board(self) -> Tuple[int, int]:
-        p, status = await self.board.send_receive(MSP.STATUS_EX)
+        _, status = await self.board.get(StatusEx)
+        if status is None:
+            return self._profile_tracker
         self._state = self.SyncedState.CLEAN
         self._profile_tracker = (self._pid, self._rate) = (status.pid_profile, status.rate_profile)
         return self._profile_tracker
 
     async def _send_pid_to_board(self, pid) -> bool:
         logger.debug("PID profile to: %s", pid)
-        p, msg = await self.board.send_receive(MSP.SELECT_SETTING, dict(pid_profile=pid))
+        p, _ = await self.board.set(SelectPID(pid))
+        # return p.message_type != "ERR"
+        return True
 
     async def _send_rate_to_board(self, rate) -> bool:
         logger.debug("Rate profile to: %s", rate)
-        p, msg = await self.board.send_receive(MSP.SELECT_SETTING, dict(rate_profile=rate))
+        p, _ = await self.board.set(SelectRate(rate))
+        return True
 
     async def apply_changes(self) -> bool:
         """Apply any locally changed profiles to the board.
@@ -157,53 +175,83 @@ class Profile:
         return True
 
 
+@dataclass
 class Board:
     """Board is an interface for serial connection, configuration retrieval and saving."""
 
-    _ready_tasks = []
+    device: str
+    baudrate: int = 115200
+    serial_trails: int = 100
+    loop: Optional[asyncio.AbstractEventLoop] = None
+    profile: Optional[Profile] = None
+
+    _ready_tasks: List[Coroutine] = field(default_factory=lambda: list(), init=False, repr=False)
 
     # TODO: allow to pass init profiles to Profile from board init
-    def __init__(self, device: str, baudrate: int = 115200, trials=100, loop=None) -> None:
-        # events
+    def __post_init__(self) -> None:
+        # board events
         self.connected = asyncio.Event()
         self.ready = asyncio.Event()
 
         self.read_lock = asyncio.Lock()
         self.write_lock = asyncio.Lock()
+        self.message_lock = asyncio.Lock()
 
-        self.device = device
-        self.baudrate = baudrate
+        if self.loop is None:
+            self.loop = asyncio.get_running_loop()
 
-        if loop is None:
-            loop = asyncio.get_running_loop()
+        # TODO: every message sent by the board attaches the current msp version to the context
+        # for conditional struct building. The initial board message can't send it as
+        self.info = CombinedBoardInfo(None, None, None, None, None, None, None)
 
-        # found board info
-        self.info = BoardInfo()
         # rate and pid profile manager
-        # self.profile = Profile(board=self)
-        # self._ready_task(self.profile._check_connection)
+        # TODO: handle assigning board to custom profiles
+        if self.profile is None:
+            self.profile = Profile(board=self)
+        self._ready_task(self.profile._check_connection)
 
         # TODO: register configs for saving/applying?
         # self.rx_conf = RxConfig()
         # self.rc_tuning = RcTuning()
 
-        # Serial options/state
-        self.serial_trials = trials
         self._ready_task(self.open_serial)
         self._ready_task(self.get_board_info)
-        loop.create_task(self._run_ready_tasks())
+        self.loop.create_task(self._run_ready_tasks())
 
-    def _ready_task(self, coro):
+    def _ready_task(self, coro: Coroutine) -> None:
         self._ready_tasks.append(coro())
 
-    async def _run_ready_tasks(self):
+    async def _run_ready_tasks(self) -> None:
         await asyncio.gather(*self._ready_tasks)
         self.ready.set()
 
-    async def get_board_info(self):
-        pass
+    async def get_board_info(self) -> None:
+        await self.connected.wait()
+        _, name = await self.get(Name)
+        _, api = await self.get(ApiVersion)
+        _, version = await self.get(FcVersion)
+        _, build_info = await self.get(BuildInfo)
+        _, board_info = await self.get(BoardInfo)
+        _, variant = await self.get(FcVariant)
+        _, uid = await self.get(Uid)
+        self.info = CombinedBoardInfo(
+            name,
+            api,
+            version,
+            build_info,
+            board_info,
+            variant,
+            uid,
+        )
 
-    async def open_serial(self, baudrate: Union[int, None] = None, **kwargs):
+    @property
+    def msp_version(self) -> Optional[VersionInfo]:
+        try:
+            return self.info.api.semver
+        except AttributeError:
+            return None
+
+    async def open_serial(self, baudrate: Optional[int] = None, **kwargs) -> None:
         baudrate = baudrate or self.baudrate
         try:
             self.reader, self.writer = await open_serial_connection(
@@ -238,6 +286,7 @@ class Board:
         self.connected.clear()
         # self.loop_task.cancel()
 
+    # TODO: update fields arg requirement here
     async def send_msg(self, code: MSP, fields=None, blocking=True, timeout=-1):
         """Generates and sends a message with the passed code and data.
 
@@ -249,7 +298,7 @@ class Board:
         Returns:
             int: Total bytes sent
         """
-        buff = out_message_builder(code, fields=fields)
+        buff = out_message_builder(code, fields=fields, msp=self.msp_version)
 
         async with self.write_lock:
             try:
@@ -262,7 +311,7 @@ class Board:
     async def receive_msg(self):
         """Read the current line from the serial port and parse the MSP message.
 
-        Parse the message and return a contstruct Container.
+        Parse the message and return a construct Container.
 
         Returns:
             Container | None: Containter holding the message data, or None on no data.
@@ -280,33 +329,39 @@ class Board:
                 data_bytes = await self.reader.read(total_length)
                 all_bytes = preamble_bytes + data_bytes
                 data_bytes = preamble_bytes[3:5] + data_bytes
-                msg = Data.parse(data_bytes)
                 logger.debug("all bytes: %s", all_bytes)
-                return preamble, msg_data(msg)
+                msg = Data.parse(data_bytes, msp=self.msp_version)
+                data = msg_data(msg)
+                logger.debug("fields: %s", data)
+                return preamble, data
             else:
                 # read last crc byte
+                # TODO: fix message struct as to actually perform crc when receiving messages
                 await self.reader.read(1)
 
             return preamble, None
 
-    async def send_receive(self, code: MSP, data=None) -> Union[None, Container]:
+    async def send_receive(self, code: MSP, fields=None) -> Union[None, Container]:
         # TODO: Use an asyncio Queue to make sure the send/receive happens consecutively?
-        await self.send_msg(code, data=data)
-        return await self.receive_msg()
+        async with self.message_lock:
+            await self.send_msg(code, fields=fields)
+            return await self.receive_msg()
 
-    async def get(self, fields: MSPFields):
-        fields.struct
-        assert fields.direction in [Direction.OUT, Direction.BOTH]
-        await self.send_msg(fields.get_code)
-        # TODO: assert code received is the same get_code
-        return await self.receive_msg()
+    async def get(self, fields: Type[MSPFields]):
+        assert fields.get_direction() in [Direction.OUT, Direction.BOTH]
 
-    async def set(self, fields: MSPFields):
-        fields.struct
-        assert fields.direction in [Direction.IN, Direction.BOTH]
-        await self.send_msg(fields.set_code, data=fields)
-        # TODO: assert code received is the same get_code
-        return await self.receive_msg()
+        async with self.message_lock:
+            await self.send_msg(fields.get_code)
+            # TODO: assert code received is the same get_code
+            return await self.receive_msg()
+
+    async def set(self, fields: Type[MSPFields]):
+        assert fields.get_direction() in [Direction.IN, Direction.BOTH]
+
+        async with self.message_lock:
+            await self.send_msg(fields.set_code, fields=fields)
+            # TODO: assert code received is the same get_code
+            return await self.receive_msg()
 
     async def __add__(self, other):
         if issubclass(other, MSPFields):
@@ -315,4 +370,3 @@ class Board:
     async def __sub__(self, other):
         if issubclass(other, MSPFields):
             return await self.get(other)
-

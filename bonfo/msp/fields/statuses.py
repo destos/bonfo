@@ -2,12 +2,30 @@
 
 
 from dataclasses import dataclass
+from functools import cached_property
+from typing import Optional, Union
 
-from construct import Array, FixedSized, FlagsEnum, GreedyBytes, Int8ub, Int16ub, Int16ul, Int32ub, PaddedString, this
-from construct_typed import csfield
+from arrow import Arrow
+from construct import (
+    Array,
+    FixedSized,
+    FlagsEnum,
+    GreedyBytes,
+    Int8ub,
+    Int16ub,
+    Int16ul,
+    Int32ub,
+    ListContainer,
+    PaddedString,
+    this,
+)
+from construct_typed import FlagsEnumBase, TFlagsEnum, csfield
+from semver import VersionInfo
 
 from ..adapters import BTFLTimestamp, GitHash, Int8ubPlusOne, RawSingle
 from ..codes import MSP
+from ..structs import MSPVersion
+from ..versions import MSPMaxSupported, MSPVersions
 from .base import MSPFields
 
 
@@ -19,6 +37,14 @@ class ApiVersion(MSPFields, get_code=MSP.API_VERSION):
     msp_protocol: int = csfield(Int8ub)
     api_major: int = csfield(Int8ub)
     api_minor: int = csfield(Int8ub)
+
+    @cached_property
+    def semver(self):
+        return VersionInfo(self.msp_protocol, self.api_major, self.api_minor)
+
+    @cached_property
+    def supported(self):
+        return self.semver <= MSPMaxSupported
 
 
 @dataclass
@@ -35,29 +61,77 @@ class FcVersion(MSPFields, get_code=MSP.FC_VERSION):
 
 @dataclass
 class BuildInfo(MSPFields, get_code=MSP.BUILD_INFO):
-    date_time: int = csfield(BTFLTimestamp)
-    git_hash: int = csfield(GitHash)
+    date_time: Union[str, Arrow] = csfield(BTFLTimestamp)
+    git_hash: str = csfield(GitHash)
+
+
+class TargetCapabilitiesFlags(FlagsEnumBase):
+    HAS_VCP = 1 << 0
+    HAS_SOFTSERIAL = 1 << 1
+    IS_UNIFIED = 1 << 2
+    HAS_FLASH_BOOTLOADER = 1 << 3
+    SUPPORTS_CUSTOM_DEFAULTS = 1 << 4
+    HAS_CUSTOM_DEFAULTS = 1 << 5
+    SUPPORTS_RX_BIND = 1 << 6
+
+
+class ConfigurationProblemsFlags(FlagsEnumBase):
+    ACC_NEEDS_CALIBRATION = 1 << 0
+    MOTOR_PROTOCOL_DISABLED = 1 << 1
 
 
 @dataclass
 class BoardInfo(MSPFields, get_code=MSP.BOARD_INFO):
-    pass
+    short_name: str = csfield(PaddedString(4, "utf8"))
+    hardware_revision: int = csfield(Int16ub)
+    uses_max7456: int = csfield(Int8ub, "if 2, uses a MAX7456")
+    target_capabilities: TargetCapabilitiesFlags = csfield(TFlagsEnum(Int8ub, TargetCapabilitiesFlags))
+    _target_name_length: int = csfield(Int8ub)
+    target_name: str = csfield(PaddedString(this._target_name_length, "utf8"))
+    _board_name_length: int = csfield(Int8ub)
+    board_name: str = csfield(PaddedString(this._board_name_length, "utf8"))
+    _manufacturer_id_length: int = csfield(Int8ub)
+    manufacturer_id: str = csfield(PaddedString(this._manufacturer_id_length, "utf8"))
+    signature: str = csfield(PaddedString(32, "utf8"))
+    mcu_type: int = csfield(Int8ub)
+    configuration_state: Optional[int] = csfield(MSPVersion(Int8ub, MSPVersions.V1_42))
+    sample_rate: Optional[int] = csfield(MSPVersion(Int16ub, MSPVersions.V1_43), "gyro sample rate")
+    configuration_problems: ConfigurationProblemsFlags = csfield(
+        MSPVersion(TFlagsEnum(Int32ub, ConfigurationProblemsFlags), MSPVersions.V1_43),
+    )
+
+
+@dataclass
+class SetBoardInfo(MSPFields, set_code=MSP.SET_BOARD_INFO):
+    _board_name_length: int = csfield(Int8ub)
+    board_name: str = csfield(PaddedString(this._board_name_length, "utf8"))
 
 
 @dataclass
 class Uid(MSPFields, get_code=MSP.UID):
     """Board UID."""
 
-    uid: int = csfield(Array(3, Int32ub))
+    uid: ListContainer[int] = csfield(Array(3, Int32ub))
+
+
+@dataclass
+class Name(MSPFields, get_code=MSP.NAME, set_code=MSP.SET_NAME):
+    name: str = csfield(PaddedString(16, "utf8"))
+
+
+@dataclass
+class CombinedBoardInfo:
+    name: Optional[Name]
+    api: Optional[ApiVersion]
+    version: Optional[FcVersion]
+    build: Optional[BuildInfo]
+    board: Optional[BoardInfo]
+    variant: Optional[FcVariant]
+    uid: Optional[Uid]
 
 
 @dataclass
 class AccTrim(MSPFields, get_code=MSP.ACC_TRIM):
-    pass
-
-
-@dataclass
-class Name(MSPFields, get_code=MSP.NAME):
     pass
 
 
@@ -146,9 +220,9 @@ class StatusEx(MSPFields, get_code=MSP.STATUS_EX):
 
 @dataclass
 class RawIMU(MSPFields, get_code=MSP.RAW_IMU):
-    accelerometer: int = csfield(RawSingle)
-    gyroscope: int = csfield(RawSingle)
-    magnetometer: int = csfield(RawSingle)
+    accelerometer: ListContainer[int] = csfield(RawSingle)
+    gyroscope: ListContainer[int] = csfield(RawSingle)
+    magnetometer: ListContainer[int] = csfield(RawSingle)
 
 
 @dataclass

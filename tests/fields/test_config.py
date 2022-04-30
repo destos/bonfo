@@ -7,31 +7,31 @@ from bonfo.msp.fields.config import SelectPID, SelectRate, SelectSetting
 def test_select_profile_out_of_range():
     with pytest.raises(ValidationError):
         data = SelectPID(10)
-        SelectSetting.struct.build(data)
+        SelectSetting.get_struct().build(data)
 
     with pytest.raises(ValidationError):
         data = SelectRate(10)
-        SelectSetting.struct.build(data)
+        SelectSetting.get_struct().build(data)
 
 
 def test_select_setting_rate_profile_build():
     data = SelectSetting(profile=dict(rate_profile=3))
-    assert SelectSetting.struct.build(data) == b"\x82"
+    assert SelectSetting.get_struct().build(data) == b"\x82"
 
 
 def test_select_rate_build():
     data = SelectRate(3)
-    assert SelectSetting.struct.build(data) == b"\x82"
+    assert SelectSetting.get_struct().build(data) == b"\x82"
 
 
 def test_select_setting_pid_profile_build():
     data = SelectSetting(profile=dict(pid_profile=2))
-    assert SelectSetting.struct.build(data) == b"\x01"
+    assert SelectSetting.get_struct().build(data) == b"\x01"
 
 
 def test_select_pid_build():
     data = SelectPID(3)
-    assert SelectSetting.struct.build(data) == b"\x02"
+    assert SelectSetting.get_struct().build(data) == b"\x02"
 
 
 def xtest_rc_tuning_parse():

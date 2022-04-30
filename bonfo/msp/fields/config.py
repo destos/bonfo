@@ -1,8 +1,9 @@
 """Message structs that deal with configuring the board."""
 
 from dataclasses import dataclass
+from typing import Any
 
-from construct import Int8ub, Int16ub, Struct, Union
+from construct import Container, Int8ub, Int16ub, Struct, Union
 from construct_typed import csfield
 
 from ..adapters import RcFloat, SelectPIDProfile, SelectRateProfile
@@ -23,7 +24,7 @@ class SelectSetting(MSPFields, set_code=MSP.SELECT_SETTING):
     This message will not be successful if the board is armed.
     """
 
-    profile: int = csfield(Union(None, "pid_profile" / SelectPIDProfile, "rate_profile" / SelectRateProfile))
+    profile: Container[Any] = csfield(Union(None, "pid_profile" / SelectPIDProfile, "rate_profile" / SelectRateProfile))
 
 
 def SelectPID(pid):

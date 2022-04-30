@@ -1,7 +1,8 @@
 import logging
 
-from construct import Checksum, ChecksumError, IfThenElse, Optional
+from construct import Checksum, ChecksumError, IfThenElse, Optional, Struct, Switch
 
+from bonfo.msp.codes import MSP
 from bonfo.msp.versions import MSPVersions
 
 logger = logging.getLogger(__name__)
@@ -33,3 +34,14 @@ class LenientChecksum(Checksum):
         except ChecksumError as e:
             logger.error("CRC failed {}", exc_info=e)
             return self.checksumfield._parsereport(stream, context, path)
+
+
+def FrameStruct(frame_id: MSP) -> Struct:
+    from .fields.base import build_translator_map
+
+    """FrameStruct wraps a optional switch so as to not cause errors when no data is passed."""
+    return Optional(Switch(frame_id, build_translator_map()))
+
+
+# def SpecifiedString
+# Make a string struct that combines the first byte with a padded string that specifies the total string length

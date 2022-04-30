@@ -2,7 +2,8 @@ from construct import Container
 from pytest_mock import MockerFixture
 
 from bonfo.board import Profile
-from bonfo.msp.codes import MSP
+from bonfo.msp.fields.config import SelectPID, SelectRate
+from bonfo.msp.fields.statuses import StatusEx
 
 
 def test_profile_str(mock_board) -> None:
@@ -48,7 +49,7 @@ async def xtest_board_ready_wait(mock_board):
 
 async def test_profile_manager_with_no_args(mock_board, mocker: MockerFixture) -> None:
     """If a profile context manager is made with no args do nothing."""
-    apple_changes_spy = mocker.spy(Profile, "apply_changes")
+    apply_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
     profile.board.send_receive.side_effect = []
     assert profile.pid == 1
@@ -58,9 +59,9 @@ async def test_profile_manager_with_no_args(mock_board, mocker: MockerFixture) -
         assert pro.pid == 1
         assert pro.rate == 1
         assert isinstance(pro, Profile)
-        apple_changes_spy.assert_called_once_with(profile)
+        apply_changes_spy.assert_called_once_with(profile)
     # Called once in total after exit
-    apple_changes_spy.assert_has_calls([mocker.call(profile)])
+    apply_changes_spy.assert_has_calls([mocker.call(profile)])
     assert profile._revert_to_profiles == (1, 1)
     assert profile.pid == 1
     assert profile.rate == 1
@@ -69,13 +70,15 @@ async def test_profile_manager_with_no_args(mock_board, mocker: MockerFixture) -
 
 async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture) -> None:
     """Side effects of providing a different pid and rate in the async profile manager."""
-    apple_changes_spy = mocker.spy(Profile, "apply_changes")
+    apply_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
-    profile.board.send_receive.side_effect = [
+    profile.board.set.side_effect = [
         # return from _set_pid_to_board call, not used currently
         (None, None),
         # return from _set_rate_to_board call, not used currently
         (None, None),
+    ]
+    profile.board.get.side_effect = [
         # return from _set_profiles_from_board call, from the "board"
         (None, Container(pid_profile=2, rate_profile=4)),
     ]
@@ -86,33 +89,35 @@ async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture
         assert pro.pid == 2
         assert pro.rate == 4
         assert isinstance(pro, Profile)
-        apple_changes_spy.assert_called_once_with(profile)
+        apply_changes_spy.assert_called_once_with(profile)
     # Called once in total after exit
-    apple_changes_spy.assert_called_once_with(profile)
+    apply_changes_spy.assert_called_once_with(profile)
     assert profile._revert_to_profiles == (1, 1)
     # pid and rate not reverted
     assert profile.pid == 2
     assert profile.rate == 4
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(pid_profile=2))
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(rate_profile=4))
-    profile.board.send_receive.assert_any_await(MSP.STATUS_EX)
+    profile.board.set.assert_any_await(SelectPID(2))
+    profile.board.set.assert_any_await(SelectRate(4))
+    profile.board.get.assert_any_await(StatusEx)
 
 
 async def test_profile_manager_with_revert_on_exit(mock_board, mocker: MockerFixture) -> None:
     """revert_on_exit flag reverts to previous profiles on exit of manager."""
-    apple_changes_spy = mocker.spy(Profile, "apply_changes")
+    apply_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
-    profile.board.send_receive.side_effect = [
+    profile.board.set.side_effect = [
         # return from _set_pid_to_board call, not used currently
         (None, None),
         # return from _set_rate_to_board call, not used currently
         (None, None),
-        # return from _set_profiles_from_board call, inside apply_changes
-        (None, Container(pid_profile=2, rate_profile=4)),
         # second return from _set_pid_to_board call, not used currently
         (None, None),
         # second return from _set_rate_to_board call, not used currently
         (None, None),
+    ]
+    profile.board.get.side_effect = [
+        # return from _set_profiles_from_board call, inside apply_changes
+        (None, Container(pid_profile=2, rate_profile=4)),
         # return from _set_profiles_from_board second call, inside apply_changes
         (None, Container(pid_profile=1, rate_profile=1)),
     ]
@@ -123,31 +128,32 @@ async def test_profile_manager_with_revert_on_exit(mock_board, mocker: MockerFix
         assert pro.pid == 2
         assert pro.rate == 4
         assert isinstance(pro, Profile)
-        apple_changes_spy.assert_called_once_with(profile)
+        apply_changes_spy.assert_called_once_with(profile)
     # Called once in total after exit
-    apple_changes_spy.assert_has_calls([mocker.call(profile), mocker.call(profile)])
+    apply_changes_spy.assert_has_calls([mocker.call(profile), mocker.call(profile)])
     assert profile._revert_to_profiles == (1, 1)
     # pid and rate not reverted
     assert profile.pid == 1
     assert profile.rate == 1
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(pid_profile=2))
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(rate_profile=4))
-    profile.board.send_receive.assert_any_await(MSP.STATUS_EX)
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(pid_profile=1))
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(rate_profile=1))
-    profile.board.send_receive.assert_any_await(MSP.STATUS_EX)
+    profile.board.set.assert_any_await(SelectPID(2))
+    profile.board.set.assert_any_await(SelectRate(4))
+    profile.board.get.assert_any_await(StatusEx)
+    profile.board.set.assert_any_await(SelectPID(1))
+    profile.board.set.assert_any_await(SelectRate(1))
+    profile.board.get.assert_any_await(StatusEx)
 
 
 async def test_set_profiles_from_board(mock_board):
     """Sync down the current board profiles and set to local attributes."""
     profile = Profile(board=mock_board)
-    profile.board.send_receive.side_effect = [
+    mock_board.get.side_effect = [
+        # emulate a partial status_ex message container
         (None, Container(pid_profile=3, rate_profile=6)),
     ]
     assert profile.pid == 1
     assert profile.rate == 1
     result = await profile._set_profiles_from_board()
-    profile.board.send_receive.assert_any_await(MSP.STATUS_EX)
+    mock_board.get.assert_any_await(StatusEx)
     assert profile._profile_tracker == (3, 6) == result
     assert profile._state == Profile.SyncedState.CLEAN
     assert profile.pid == 3
@@ -157,12 +163,12 @@ async def test_set_profiles_from_board(mock_board):
 async def test_send_pid_to_board(mock_board):
     """Send the selected PID to the board, should not change local values."""
     profile = Profile(board=mock_board)
-    profile.board.send_receive.side_effect = [
-        (None, None),
+    profile.board.set.side_effect = [
+        (Container(message_type=">"), None),
     ]
     assert profile.pid == 1
-    await profile._send_pid_to_board(3)
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(pid_profile=3))
+    assert await profile._send_pid_to_board(3) is True
+    profile.board.set.assert_any_await(SelectPID(3))
     assert profile._profile_tracker == (1, 1)
     assert profile._state == Profile.SyncedState.UNFETCHED
     assert profile.pid == 1
@@ -171,12 +177,12 @@ async def test_send_pid_to_board(mock_board):
 async def test_send_rate_to_board(mock_board):
     """Send the selected rate to the board, should not change local values."""
     profile = Profile(board=mock_board)
-    profile.board.send_receive.side_effect = [
+    profile.board.set.side_effect = [
         (None, None),
     ]
     assert profile.rate == 1
     await profile._send_rate_to_board(3)
-    profile.board.send_receive.assert_any_await(MSP.SELECT_SETTING, dict(rate_profile=3))
+    profile.board.set.assert_any_await(SelectRate(3))
     assert profile._profile_tracker == (1, 1)
     assert profile._state == Profile.SyncedState.UNFETCHED
     assert profile.rate == 1

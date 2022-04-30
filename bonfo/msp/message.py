@@ -11,18 +11,17 @@ from construct import (
     Hex,
     Int8ub,
     Mapping,
-    Optional,
     RawCopy,
     Rebuild,
     Struct,
-    Switch,
     this,
 )
+
+from bonfo.msp.structs import FrameStruct
 
 from .adapters import MessageType
 from .codes import frame_map
 from .expr import zero_none_len_
-from .fields.base import translator_map
 
 # fmt: off
 # MSP v1 message struct
@@ -45,7 +44,7 @@ Message = Struct(
     "packet" / RawCopy(Struct(
         "data_length" / Rebuild(Byte, zero_none_len_(this.fields)),
         "frame_id" / Mapping(MessageType, frame_map),
-        "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, translator_map))),  # type: ignore
+        "fields" / FixedSized(this.data_length, FrameStruct(this.frame_id)),
     )),
     "crc" / Hex(Checksum(
         Byte,
@@ -62,6 +61,13 @@ Message = Struct(
 # concat the data length byte to newly received bytes and parse the data if available
 # Would love to fix StreamReader.readline so I didn't have to do this
 
+MessageTypeEnum = Enum(
+    Byte,
+    IN=ord(">"),
+    OUT=ord("<"),
+    ERR=ord("!"),
+)
+
 Preamble = Struct(
     "signature" / Const(b"$"),
     "version" / Const(b"M"),
@@ -71,16 +77,7 @@ Preamble = Struct(
     #         V1 = ord("M"),
     #         V2 = ord("X"),
     #     ), "V1"),
-    "message_type"
-    / Default(
-        Enum(
-            Byte,
-            IN=ord(">"),
-            OUT=ord("<"),
-            ERR=ord("!"),
-        ),
-        "IN",
-    ),
+    "message_type" / Default(MessageTypeEnum, "IN"),
     "data_length" / Int8ub,
     "frame_id" / Mapping(MessageType, frame_map),
 )
@@ -91,7 +88,7 @@ Data = Struct(
         Struct(
             "data_length" / Int8ub,
             "frame_id" / Mapping(MessageType, frame_map),
-            "fields" / FixedSized(this.data_length, Optional(Switch(this.frame_id, translator_map))),  # type: ignore
+            "fields" / FixedSized(this.data_length, FrameStruct(this.frame_id)),
         )
     ),
     # "crc" / Byte

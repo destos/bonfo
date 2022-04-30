@@ -11,6 +11,11 @@ def init_board_mocks(module_mocker):
     module_mocker.patch("bonfo.board.Board.connect")
 
 
+# @pytest.fixture(scope="function")
+# def init_msg_mocks(module_mocker):
+#     module_mocker.patch("bonfo.board.Board.send_msg").stub()
+#     module_mocker.patch("bonfo.board.Board.receive_msg").stub()
+
 
 @pytest.fixture(scope="function")
 def mock_open_serial_connection(module_mocker, mocker):
@@ -44,4 +49,6 @@ def mock_board(mocker: MockerFixture) -> MockFixture:
     # Always ready
     board.ready.set()
     board.send_receive = mocker.AsyncMock()
+    board.get = mocker.AsyncMock()
+    board.set = mocker.AsyncMock()
     return board
