@@ -21,3 +21,15 @@ def out_message_builder(code: MSP, fields=None, debug=False, **context):
 
 def in_message_builder(code: MSP, fields=None, debug=False, **context):
     return message_builder("IN", code, fields, debug=debug, **context)
+
+
+def msg_packet(msg):
+    return msg.packet.value
+
+
+def msg_data(msg):
+    try:
+        return msg.packet.value.fields
+    except Exception as e:
+        logger.exception("problem in msg_data", exc_info=e)
+        return None

@@ -7,10 +7,11 @@ test: format lint unittest
 format:
 	${prun} isort $(sources) tests
 	${prun} black $(sources) tests
+	# ${prun} autoflake8 -r -i --ignore-init-module-imports $(sources) tests
 
 lint:
 	${prun} flake8 $(sources) tests
-	${prun} mypy $(sources) tests
+	${prun} mypy $(sources)
 
 unittest:
 	${prun} pytest
@@ -29,3 +30,6 @@ clean:
 
 docs:
 	${prun} mkdocs build
+
+docs-serve:
+	${prun} mkdocs serve

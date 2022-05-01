@@ -1,6 +1,7 @@
 from math import floor
 
-from construct import Adapter, Array, Byte, ExprAdapter, Int8ub, Int16ub, Validator, obj_
+import arrow
+from construct import Adapter, Array, Byte, ExprAdapter, Int8ub, Int16ub, PaddedString, Validator, obj_
 
 from bonfo.msp.codes import MSP
 
@@ -26,6 +27,7 @@ MessageType = MessageTypeAdapter(Byte)
 RcFloat = RcAdapter(Int8ub)
 RawSingle = Array(3, Int16ub)
 
+Int8ubPlusOne = ExprAdapter(Int8ub, obj_ + 1, obj_ - 1)
 
 RATEPROFILE_MASK = 0x80  # 1 << 7
 
@@ -40,7 +42,7 @@ class RateProfileValidator(Validator):
         return int(obj) in list(range(1, 7))
 
 
-SelectPIDProfile = PIDProfileValidator(ExprAdapter(Int8ub, obj_ + 1, obj_ - 1))
+SelectPIDProfile = PIDProfileValidator(Int8ubPlusOne)
 
 
 SelectRateProfile = RateProfileValidator(
@@ -52,3 +54,23 @@ SelectRateProfile = RateProfileValidator(
         (obj_ ^ RATEPROFILE_MASK) - 1,
     )
 )
+
+
+DATE_TIME_LENGTH = 11 + 8
+GIT_HASH_LENGTH = 7
+
+
+class TimestampAdapter(Adapter):
+    def _decode(self, obj, context, path) -> arrow.Arrow:
+        try:
+            return arrow.get(obj, "MMM  D YYYYHH:mm:ss")
+        except arrow.ParserError:
+            return arrow.get(obj, "MMM D YYYYHH:mm:ss")
+
+    def _encode(self, obj, context, path) -> str:
+        return arrow.get(obj).format("MMM D YYYYHH:mm:ss")
+
+
+BTFLTimestamp = TimestampAdapter(PaddedString(DATE_TIME_LENGTH, "utf8"))
+
+GitHash = PaddedString(GIT_HASH_LENGTH, "utf8")

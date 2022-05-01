@@ -6,11 +6,13 @@ edit_uri: edit/main/docs/
 #strict: true
 nav:
   - Home: index.md
-  - Ideas: ideas.md
   - Installation: installation.md
-  - Usage: usage.md
+  - Ideas: ideas.md
+  - Usage:
+    - usage/index.md
+    - Profiles: usage/profiles.md
+    - CLI: usage/cli.md
   - Modules: api.md
-  - CLI: cli.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 theme:
@@ -39,6 +41,7 @@ theme:
   features:
     - header.autohide
     - navigation.indexes
+    - navigation.expanded
     - navigation.instant
     - navigation.tabs
     - navigation.tabs.sticky
@@ -54,11 +57,14 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.tabbed
   - attr_list
+  - md_in_html
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.highlight:
       linenums: false
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.inlinehilite
   - pymdownx.details
   - admonition
