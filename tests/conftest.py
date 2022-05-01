@@ -29,13 +29,25 @@ def mock_open_serial_connection(module_mocker, mocker):
 
 
 @pytest.fixture(scope="function")
-def mock_send_receive(module_mocker):
-    return module_mocker.patch("bonfo.board.Board.send_receive")
+def mock_profile(module_mocker, mocker):
+    profile = module_mocker.patch("bonfo.profile.Profile")
+    profile._check_connection = mocker.AsyncMock()
+    return profile
+
+
+@pytest.fixture(scope="function")
+def mock_board_get(module_mocker):
+    return module_mocker.patch("bonfo.board.Board.get")
+
+
+@pytest.fixture(scope="function")
+def mock_board_set(module_mocker):
+    return module_mocker.patch("bonfo.board.Board.set")
 
 
 @pytest.fixture(scope="function")
 def mock_profile(module_mocker, mocker: MockerFixture):
-    profile = module_mocker.patch("bonfo.board.Profile")
+    profile = module_mocker.patch("bonfo.profile.Profile")
     profile.pid = 2
     profile.rate = 2
     profile._check_connection = mocker.AsyncMock()

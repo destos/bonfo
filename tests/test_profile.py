@@ -1,9 +1,9 @@
 from construct import Container
 from pytest_mock import MockerFixture
 
-from bonfo.board import Profile
 from bonfo.msp.fields.config import SelectPID, SelectRate
 from bonfo.msp.fields.statuses import StatusEx
+from bonfo.profile import Profile
 
 
 def test_profile_str(mock_board) -> None:
@@ -190,8 +190,8 @@ async def test_send_rate_to_board(mock_board):
 
 async def test_apply_changes_applied(mock_board, mocker: MockerFixture):
     """Full apply test."""
-    mock_send_pid = mocker.patch("bonfo.board.Profile._send_pid_to_board")
-    mock_send_rate = mocker.patch("bonfo.board.Profile._send_rate_to_board")
+    mock_send_pid = mocker.patch("bonfo.profile.Profile._send_pid_to_board")
+    mock_send_rate = mocker.patch("bonfo.profile.Profile._send_rate_to_board")
     mock_set_profiles = mocker.patch.object(Profile, "_set_profiles_from_board", return_value=(2, 2))
     profile = Profile(board=mock_board)
     profile._state = Profile.SyncedState.AWAITING_APPLY
@@ -206,8 +206,8 @@ async def test_apply_changes_applied(mock_board, mocker: MockerFixture):
 
 async def test_apply_changes_bad_state(mock_board, mocker: MockerFixture):
     """Profile is in bad state to apply."""
-    mock_send_pid = mocker.patch("bonfo.board.Profile._send_pid_to_board")
-    mock_send_rate = mocker.patch("bonfo.board.Profile._send_rate_to_board")
+    mock_send_pid = mocker.patch("bonfo.profile.Profile._send_pid_to_board")
+    mock_send_rate = mocker.patch("bonfo.profile.Profile._send_rate_to_board")
     mock_set_profiles = mocker.patch.object(Profile, "_set_profiles_from_board", return_value=(2, 2))
     profile = Profile(board=mock_board)
     profile._state = Profile.SyncedState.CLEAN
@@ -223,8 +223,8 @@ async def test_apply_changes_bad_state(mock_board, mocker: MockerFixture):
 
 async def test_apply_changes_different_board_result(mock_board, mocker: MockerFixture):
     """Profiles from board differ."""
-    mock_send_pid = mocker.patch("bonfo.board.Profile._send_pid_to_board")
-    mock_send_rate = mocker.patch("bonfo.board.Profile._send_rate_to_board")
+    mock_send_pid = mocker.patch("bonfo.profile.Profile._send_pid_to_board")
+    mock_send_rate = mocker.patch("bonfo.profile.Profile._send_rate_to_board")
     mock_set_profiles = mocker.patch.object(Profile, "_set_profiles_from_board", return_value=(2, 4))
     profile = Profile(board=mock_board)
     profile._state = Profile.SyncedState.AWAITING_APPLY

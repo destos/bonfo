@@ -1,19 +1,29 @@
 import asyncio
 import logging
 
+from pytest_mock import MockerFixture
 from serial_asyncio import serial
 
-from bonfo.board import Board, Profile
-from bonfo.msp.fields import BoardInfo
+from bonfo.board import Board
+from bonfo.msp.fields.statuses import (
+    ApiVersion,
+    BoardInfo,
+    BuildInfo,
+    CombinedBoardInfo,
+    FcVariant,
+    FcVersion,
+    Name,
+    Uid,
+)
 
 logger = logging.getLogger(__name__)
 
 
-async def xtest_board_init_values(mock_open_serial_connection, mock_send_receive) -> None:
-    board = Board("/dev/tty-mock")
+async def test_board_init_values(mock_open_serial_connection, mock_profile, mock_board_get) -> None:
+    board = Board("/dev/tty-mock", initial_data=False, profile=mock_profile)
     await board.ready.wait()
-    mock_send_receive.side_effect = [(None, None)]
-    mock_open_serial_connection.assert_waited_once_with(
+    mock_board_get.side_effect = [(None, None)]
+    mock_open_serial_connection.assert_awaited_once_with(
         url="/dev/tty-mock",
         baudrate=115200,
         bytesize=serial.EIGHTBITS,
@@ -26,29 +36,56 @@ async def xtest_board_init_values(mock_open_serial_connection, mock_send_receive
     )
     assert board.device == "/dev/tty-mock"
     assert board.baudrate == 115200
-    assert isinstance(board.info, BoardInfo)
-    assert isinstance(board.profile, Profile)
-    assert board.serial_trials == 100
-    assert isinstance(board.write_lock, asyncio.Event)
-    assert isinstance(board.read_lock, asyncio.Event)
-    # board._init_serial.assert_called_once_with("/dev/tty-mock", baudrate=115200)  # type: ignore
-    # board.connect.assert_not_called()  # type: ignore
+    assert isinstance(board.info, CombinedBoardInfo)
+    assert board.profile == mock_profile
+    assert isinstance(board.write_lock, asyncio.Lock)
+    assert isinstance(board.read_lock, asyncio.Lock)
+    assert isinstance(board.message_lock, asyncio.Lock)
+    mock_profile._check_connection.assert_awaited_once()
 
 
-def xtest_board_context_manager(self) -> None:
-    with Board("/dev/tty-mock").connect() as board:
-        assert board.serial_trials == 100
-        board.connect.assert_called_once_with(trials=100)
-
-
-def xtest_board_context_manager_trials_changed(self) -> None:
-    with Board("/dev/tty-mock", serial_trails=2).connect() as board:
-        assert board.serial_trials == 2
-        board.connect.assert_called_once_with(serial_trails=2)
-
-
-async def xtest_board_connect(mock_open_serial_connection, mock_send_receive):
-    mock_send_receive.return_value = (None, None)
-    async with Board("/dev/tty").connect() as board:
+async def test_board_connect_manager(mock_open_serial_connection, mock_profile, mock_board_get, mock_board_set):
+    mock_board_get.side_effect = [(None, None)]
+    async with Board("/dev/tty", initial_data=False).connect() as board:
         assert board.connected.is_set() is True
         assert board.ready.is_set() is True
+    assert board.connected.is_set() is False
+
+
+async def test_board_initial_data_true(
+    mock_open_serial_connection, mock_profile, mock_board_get, mocker: MockerFixture
+):
+    gbi = mocker.patch("bonfo.board.Board.get_board_info")
+    async with Board("/dev/tty", initial_data=True, profile=mock_profile).connect() as board:
+        gbi.assert_awaited_with()
+
+
+async def test_board_get_board_info(mock_open_serial_connection, mock_profile, mock_board_get, mocker: MockerFixture):
+    cbi = mocker.patch("bonfo.board.CombinedBoardInfo")
+    mock_board_get.side_effect = [
+        (None, "name"),
+        (None, "api"),
+        (None, "version"),
+        (None, "build_info"),
+        (None, "board_info"),
+        (None, "variant"),
+        (None, "uid"),
+    ]
+    board = Board("/dev/tty", initial_data=False, profile=mock_profile)
+    # does not run on init
+    mock_board_get.assert_not_awaited()
+    board.connected.set()
+    # TODO: test for returned mocked info
+    await board.get_board_info()
+    mock_board_get.assert_has_awaits(
+        [
+            mocker.call(Name),
+            mocker.call(ApiVersion),
+            mocker.call(FcVersion),
+            mocker.call(BuildInfo),
+            mocker.call(BoardInfo),
+            mocker.call(FcVariant),
+            mocker.call(Uid),
+        ]
+    )
+    cbi.assert_called_with("name", "api", "version", "build_info", "board_info", "variant", "uid")
