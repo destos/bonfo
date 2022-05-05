@@ -10,29 +10,31 @@ nav:
   - Ideas: ideas.md
   - Usage:
     - usage/index.md
+    - Board: usage/board.md
     - Profiles: usage/profiles.md
+    - Sending & Receiving Messages: usage/messages.md
     - CLI: usage/cli.md
-  - Modules: api.md
+  - Modules: modules.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 theme:
   logo: assets/logo.svg
   palette:
-    - scheme: default
+    - scheme: subsiv-light
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to dark mode
-    - scheme: slate
+    - scheme: subsiv-dark
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: default
+      scheme: subsiv-light
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+      scheme: subsiv-dark
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
@@ -58,8 +60,8 @@ markdown_extensions:
   - pymdownx.tabbed
   - attr_list
   - md_in_html
-  - pymdownx.arithmatex:
-      generic: true
+  # - pymdownx.arithmatex:
+  #     generic: true
   - pymdownx.highlight:
       linenums: false
   - pymdownx.superfences
@@ -100,7 +102,11 @@ extra:
       link: "mailto:patrick@forringer.com?subject=Bonfo"
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id
+extra_css:
+  - stylesheets/extra.css
 # uncomment the following and put your google tracking id below to enable GA
 #google_analytics:
   #- UA-xxx
   #- auto
+
+# TODO: add tags to pages and tags index

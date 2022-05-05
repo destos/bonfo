@@ -1,0 +1,11 @@
+[data-md-color-scheme="subsiv-light"] {
+    --md-primary-fg-color:        #ec194e;
+    --md-primary-fg-color--light: #e7dfe1;
+    --md-primary-fg-color--dark:  #231f20;
+}
+
+[data-md-color-scheme="subsiv-dark"] {
+    --md-primary-fg-color:        #a61438;
+    --md-primary-fg-color--light: #231d1e;
+    --md-primary-fg-color--dark:  #181415;
+}
