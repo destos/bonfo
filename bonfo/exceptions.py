@@ -4,3 +4,7 @@ class BoardException(Exception):
 
 class ConnectionException(BoardException):
     pass
+
+
+class BonfoOperatorException(Exception):
+    pass

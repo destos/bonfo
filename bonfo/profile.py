@@ -120,7 +120,7 @@ class Profile:
             await self.apply_changes()
 
     async def _set_profiles_from_board(self) -> Tuple[int, int]:
-        _, status = await self.board.get(StatusEx)
+        status = await (self.board > StatusEx)
         if status is None:
             return self._profile_tracker
         self._state = self.SyncedState.CLEAN
@@ -129,13 +129,12 @@ class Profile:
 
     async def _send_pid_to_board(self, pid) -> bool:
         logger.debug("PID profile to: %s", pid)
-        p, _ = await self.board.set(SelectPID(pid))
-        # return p.message_type != "ERR"
+        await (self.board < SelectPID(pid))
         return True
 
     async def _send_rate_to_board(self, rate) -> bool:
         logger.debug("Rate profile to: %s", rate)
-        p, _ = await self.board.set(SelectRate(rate))
+        await (self.board < SelectRate(rate))
         return True
 
     async def apply_changes(self) -> bool:

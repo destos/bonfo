@@ -18,7 +18,8 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from bonfo.board import Board
 from bonfo.msp.codes import MSP
-from bonfo.msp.fields.statuses import Name
+from bonfo.msp.fields.pids import PidAdvanced
+from bonfo.msp.fields.statuses import Name, SensorAlignment
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -121,16 +122,19 @@ async def test(ctx: BonfoContext):
         return click.echo("No port selected")
     async with ctx.board.connect() as board:
         pass
-        # test1 = await board.get(PidAdvanced)
         # print(board.info)
         # print(str(board.profile))
-        # _, status = await board.get(StatusEx)
+        # status = await board.get(StatusEx)
         # print(status)
         # print(Name(name="bobby").build())
-        _, name = await board.set(Name(name="robby"))
+        name = await (board < Name(name="robby"))
         print(name)
-        _, name = await board.get(Name)
+        name = await (board > Name)
+        sensor = await (board > SensorAlignment)
+        pid = await (board > PidAdvanced)
         print(name)
+        print(sensor)
+        print(pid)
 
 
 @cli.group("profiles")

@@ -5,11 +5,14 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import AsyncIterator, Coroutine, List, Optional, Type, Union
+from typing import AsyncIterator, Coroutine, List, Optional, Tuple, Type, TypeVar, Union
 
 from construct import Container
+from construct_typed import DataclassStruct
 from semver import VersionInfo
 from serial_asyncio import open_serial_connection, serial
+
+from bonfo.exceptions import BonfoOperatorException
 
 from .msp.codes import MSP
 from .msp.fields.base import Direction
@@ -23,6 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 __all__ = ["Board"]
+
+
+Fields = TypeVar("Fields")
 
 
 @dataclass
@@ -78,13 +84,13 @@ class Board:
 
     async def get_board_info(self) -> CombinedBoardInfo:
         await self.connected.wait()
-        _, name = await self.get(Name)
-        _, api = await self.get(ApiVersion)
-        _, version = await self.get(FcVersion)
-        _, build_info = await self.get(BuildInfo)
-        _, board_info = await self.get(BoardInfo)
-        _, variant = await self.get(FcVariant)
-        _, uid = await self.get(Uid)
+        name = await (self > Name)
+        api = await (self > ApiVersion)
+        version = await (self > FcVersion)
+        build_info = await (self > BuildInfo)
+        board_info = await (self > BoardInfo)
+        variant = await (self > FcVariant)
+        uid = await (self > Uid)
         self.info = CombinedBoardInfo(
             name,
             api,
@@ -135,7 +141,7 @@ class Board:
 
     def disconnect(self):
         self.connected.clear()
-        # self.loop_task.cancel()
+        # self.loop.close()
 
     # TODO: update fields arg requirement here
     async def send_msg(self, code: MSP, fields=None, blocking=True, timeout=-1):
@@ -159,7 +165,7 @@ class Board:
             finally:
                 logger.debug("sent: %s %s", code, buff)
 
-    async def receive_msg(self):
+    async def receive_msg(self) -> Tuple[Preamble, Optional[Data]]:
         """Read the current line from the serial port and parse the MSP message.
 
         Parse the message and return a construct Container.
@@ -198,28 +204,44 @@ class Board:
             await self.send_msg(code, fields=fields)
             return await self.receive_msg()
 
-    async def get(self, fields: Type[MSPFields]):
+    async def get(self, fields: Fields) -> Fields:
         assert fields.get_direction() in [Direction.OUT, Direction.BOTH]
         assert fields.get_code is not None
 
         async with self.message_lock:
             await self.send_msg(fields.get_code)
             # TODO: assert code received is the same get_code
-            return await self.receive_msg()
+            pre, data = await self.receive_msg()
+            # TODO: raise error if preamble received is an error
+            return data
 
-    async def set(self, fields: Type[MSPFields]):
+    async def set(self, fields: Fields) -> Fields:
+        """Sends a set message to the board with the values of the given fields.
+
+        Args:
+            fields (Fields): The initialized or MSPFields instance with values.
+
+        Returns:
+            _type_: _description_
+        """
         assert fields.get_direction() in [Direction.IN, Direction.BOTH]
         assert fields.set_code is not None
 
         async with self.message_lock:
             await self.send_msg(fields.set_code, fields=fields)
             # TODO: assert code received is the same get_code
-            return await self.receive_msg()
+            pre, data = await self.receive_msg()
+            # TODO: raise error if preamble received is an error
+            return data
 
-    async def __add__(self, other):
-        if issubclass(other, MSPFields):
-            return await self.set(other)
-
-    async def __sub__(self, other):
-        if issubclass(other, MSPFields):
+    async def __gt__(self, other: Fields) -> Fields:
+        """Get data from the board with the > operator."""
+        if isinstance(other, MSPFields) or issubclass(other, MSPFields):
             return await self.get(other)
+        raise BonfoOperatorException("Not a compatible > type")
+
+    async def __lt__(self, other: Fields) -> Fields:
+        """Set data on the board with the < operator."""
+        if isinstance(other, MSPFields) or issubclass(other, MSPFields):
+            return await self.set(other)
+        raise BonfoOperatorException("Not a compatible < type")

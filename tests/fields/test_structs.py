@@ -1,13 +1,13 @@
 import pytest
 from construct import Default, Int16ub, StreamError
 
-from bonfo.msp.structs import MSPVersion
+from bonfo.msp.structs import MSPCutoff
 from bonfo.msp.versions import MSPVersions
 
 
 def test_mspversion_struct():
     """When only specifying the msp version, missing data errors, older versions are optional."""
-    struct = MSPVersion(Int16ub, MSPVersions.V1_44)
+    struct = MSPCutoff(Int16ub, MSPVersions.V1_44)
     found = struct.parse(b"\xff\x12")
     assert found == 65298
 
@@ -23,7 +23,7 @@ def test_mspversion_struct():
 
 def test_mspversion_struct_else_subcon():
     """When providing a non-optional else subcon, it acts differently."""
-    struct = MSPVersion(Int16ub, MSPVersions.V1_44, Default(Int16ub, 0))
+    struct = MSPCutoff(Int16ub, MSPVersions.V1_44, Default(Int16ub, 0))
     found = struct.parse(b"\xff\x12")
     assert found == 65298
 

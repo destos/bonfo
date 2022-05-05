@@ -23,9 +23,31 @@ from semver import VersionInfo
 
 from ..adapters import BTFLTimestamp, GitHash, Int8ubPlusOne, RawSingle
 from ..codes import MSP
-from ..structs import MSPVersion
+from ..structs import MSPCutoff
 from ..versions import MSPMaxSupported, MSPVersions
 from .base import MSPFields
+from .utils import BIT
+
+__all__ = [
+    "ApiVersion",
+    "FcVariant",
+    "FcVersion",
+    "BuildInfo",
+    "TargetCapabilitiesFlags",
+    "ConfigurationProblemsFlags",
+    "BoardInfo",
+    "Uid",
+    "AccTrim",
+    "Name",
+    "Status",
+    "ActiveSensorsFlags",
+    "ArmingDisableFlags",
+    "ConfigStateFlags",
+    "StatusEx",
+    "GyroDetectionFlags",
+    "SensorAlignment",
+    "RawIMU",
+]
 
 
 @dataclass
@@ -65,18 +87,18 @@ class BuildInfo(MSPFields, get_code=MSP.BUILD_INFO):
 
 
 class TargetCapabilitiesFlags(FlagsEnumBase):
-    HAS_VCP = 1 << 0
-    HAS_SOFTSERIAL = 1 << 1
-    IS_UNIFIED = 1 << 2
-    HAS_FLASH_BOOTLOADER = 1 << 3
-    SUPPORTS_CUSTOM_DEFAULTS = 1 << 4
-    HAS_CUSTOM_DEFAULTS = 1 << 5
-    SUPPORTS_RX_BIND = 1 << 6
+    HAS_VCP = BIT(0)
+    HAS_SOFTSERIAL = BIT(1)
+    IS_UNIFIED = BIT(2)
+    HAS_FLASH_BOOTLOADER = BIT(3)
+    SUPPORTS_CUSTOM_DEFAULTS = BIT(4)
+    HAS_CUSTOM_DEFAULTS = BIT(5)
+    SUPPORTS_RX_BIND = BIT(6)
 
 
 class ConfigurationProblemsFlags(FlagsEnumBase):
-    ACC_NEEDS_CALIBRATION = 1 << 0
-    MOTOR_PROTOCOL_DISABLED = 1 << 1
+    ACC_NEEDS_CALIBRATION = BIT(0)
+    MOTOR_PROTOCOL_DISABLED = BIT(1)
 
 
 @dataclass
@@ -93,10 +115,10 @@ class BoardInfo(MSPFields, get_code=MSP.BOARD_INFO):
     manufacturer_id: str = csfield(PaddedString(this._manufacturer_id_length, "utf8"))
     signature: str = csfield(PaddedString(32, "utf8"))
     mcu_type: int = csfield(Int8ub)
-    configuration_state: Optional[int] = csfield(MSPVersion(Int8ub, MSPVersions.V1_42))
-    sample_rate: Optional[int] = csfield(MSPVersion(Int16ub, MSPVersions.V1_43), "gyro sample rate")
+    configuration_state: Optional[int] = csfield(MSPCutoff(Int8ub, MSPVersions.V1_42))
+    sample_rate: Optional[int] = csfield(MSPCutoff(Int16ub, MSPVersions.V1_43), "gyro sample rate")
     configuration_problems: ConfigurationProblemsFlags = csfield(
-        MSPVersion(TFlagsEnum(Int32ub, ConfigurationProblemsFlags), MSPVersions.V1_43),
+        MSPCutoff(TFlagsEnum(Int32ub, ConfigurationProblemsFlags), MSPVersions.V1_43),
     )
 
 
@@ -162,36 +184,36 @@ class ActiveSensorsFlags(FlagsEnumBase):
 
 
 class ArmingDisableFlags(FlagsEnumBase):
-    NO_GYRO = 1 << 0
-    FAILSAFE = 1 << 1
-    RX_FAILSAFE = 1 << 2
-    BAD_RX_RECOVERY = 1 << 3
-    BOXFAILSAFE = 1 << 4
-    RUNAWAY_TAKEOFF = 1 << 5
-    CRASH_DETECTED = 1 << 6
-    THROTTLE = 1 << 7
-    ANGLE = 1 << 8
-    BOOT_GRACE_TIME = 1 << 9
-    NOPREARM = 1 << 10
-    LOAD = 1 << 11
-    CALIBRATING = 1 << 12
-    CLI = 1 << 13
-    CMS_MENU = 1 << 14
-    BST = 1 << 15
-    MSP = 1 << 16
-    PARALYZE = 1 << 17
-    GPS = 1 << 18
-    RESC = 1 << 19
-    RPMFILTER = 1 << 20
-    REBOOT_REQUIRED = 1 << 21
-    DSHOT_BITBANG = 1 << 22
-    ACC_CALIBRATION = 1 << 23
-    MOTOR_PROTOCOL = 1 << 24
-    ARM_SWITCH = 1 << 25
+    NO_GYRO = BIT(0)
+    FAILSAFE = BIT(1)
+    RX_FAILSAFE = BIT(2)
+    BAD_RX_RECOVERY = BIT(3)
+    BOXFAILSAFE = BIT(4)
+    RUNAWAY_TAKEOFF = BIT(5)
+    CRASH_DETECTED = BIT(6)
+    THROTTLE = BIT(7)
+    ANGLE = BIT(8)
+    BOOT_GRACE_TIME = BIT(9)
+    NOPREARM = BIT(10)
+    LOAD = BIT(11)
+    CALIBRATING = BIT(12)
+    CLI = BIT(13)
+    CMS_MENU = BIT(14)
+    BST = BIT(15)
+    MSP = BIT(16)
+    PARALYZE = BIT(17)
+    GPS = BIT(18)
+    RESC = BIT(19)
+    RPMFILTER = BIT(20)
+    REBOOT_REQUIRED = BIT(21)
+    DSHOT_BITBANG = BIT(22)
+    ACC_CALIBRATION = BIT(23)
+    MOTOR_PROTOCOL = BIT(24)
+    ARM_SWITCH = BIT(25)
 
 
 class ConfigStateFlags(FlagsEnumBase):
-    REBOOT = 1 << 8
+    REBOOT = BIT(8)
 
 
 @dataclass
@@ -219,33 +241,23 @@ class RawIMU(MSPFields, get_code=MSP.RAW_IMU):
     magnetometer: ListContainer[int] = csfield(RawSingle)
 
 
-@dataclass
-class SensorAlignment(MSPFields, get_code=MSP.SENSOR_ALIGNMENT):
+class GyroDetectionFlags(FlagsEnumBase):
+    GYRO_NONE_MASK = 0
+    GYRO_1_MASK = BIT(0)
+    GYRO_2_MASK = BIT(1)
+    GYRO_ALL_MASK = GYRO_1_MASK | GYRO_2_MASK
+    GYRO_IDENTICAL_MASK = BIT(7)  # All gyros are of the same hardware type
 
+
+@dataclass
+class SensorAlignment(MSPFields, get_code=MSP.SENSOR_ALIGNMENT, set_code=MSP.SET_SENSOR_ALIGNMENT):
+    # First byte may be ignored on set?, check msp.c
     align_gyro: int = csfield(Int8ub)
     align_acc: int = csfield(Int8ub)
     align_mag: int = csfield(Int8ub)
-    # if self.conf.is_inav:
-    #     "align_opflow" / Int8ub,
-    # else:
-    # 1.41
-    gyro_detection_flags: int = csfield(Int8ub)
-    gyro_to_use: int = csfield(Int8ub)
-    gyro_1_align: int = csfield(Int8ub)
-    gyro_2_align: int = csfield(Int8ub)
-
-
-__all__ = [
-    "ApiVersion",
-    "FcVariant",
-    "FcVersion",
-    "BuildInfo",
-    "BoardInfo",
-    "Uid",
-    "AccTrim",
-    "Name",
-    "Status",
-    "StatusEx",
-    "SensorAlignment",
-    "RawIMU",
-]
+    gyro_detection_flags: GyroDetectionFlags = csfield(
+        MSPCutoff(TFlagsEnum(Int8ub, GyroDetectionFlags), MSPVersions.V1_41)
+    )
+    gyro_to_use: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_41))
+    gyro_1_align: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_41))
+    gyro_2_align: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_41))

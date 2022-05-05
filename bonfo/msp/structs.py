@@ -8,7 +8,9 @@ from bonfo.msp.versions import MSPVersions
 logger = logging.getLogger(__name__)
 
 
-class MSPVersion(IfThenElse):  # type:ignore
+class MSPCutoff(IfThenElse):  # type:ignore
+    """MSPCutoff returns an optional struct if the context msp version is less than specified."""
+
     def __init__(self, thensubcon, version_added: MSPVersions, elsesubcon=None) -> None:
         self.version_added = version_added
         if elsesubcon is None:
@@ -21,7 +23,7 @@ class MSPVersion(IfThenElse):  # type:ignore
         # Get msp version from params context
         msp: MSPVersions = context._params.get("msp", None)
         if msp is not None:
-            return msp.value >= self.version_added.value
+            return msp >= self.version_added.value
         return True
 
 
@@ -37,10 +39,11 @@ class LenientChecksum(Checksum):
 
 
 def FrameStruct(frame_id: MSP):
-    from .fields.base import build_translator_map
+    # load all fields to make sure sub classes are populated
+    from .fields.base import build_fields_mapping
 
     """FrameStruct wraps a optional switch so as to not cause errors when no data is passed."""
-    return Optional(Switch(frame_id, build_translator_map()))
+    return Optional(Switch(frame_id, build_fields_mapping()))
 
 
 # def SpecifiedString

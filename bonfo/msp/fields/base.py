@@ -1,15 +1,13 @@
 import functools
 import logging
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from construct_typed import DataclassMixin, DataclassStruct
 
 from bonfo.msp.codes import MSP
 
 logger = logging.getLogger(__name__)
-
-translator_map: Dict[MSP, "MSPFields"] = dict()
 
 
 class Direction(Enum):
@@ -24,6 +22,7 @@ class MSPFields(DataclassMixin):
     get_code: Optional[MSP] = None
     set_code: Optional[MSP] = None
 
+    @classmethod
     def __init_subclass__(cls, get_code: MSP = None, set_code: MSP = None) -> None:
         cls.get_code = get_code
         cls.set_code = set_code
@@ -59,23 +58,12 @@ class MSPFields(DataclassMixin):
 
 
 @functools.cache
-def build_translator_map():
-    if len(translator_map) > 0:
-        return translator_map
+def build_fields_mapping() -> Dict[MSP, Optional[DataclassStruct[Any]]]:
+    fields_mappings = dict()
     for fields in MSPFields.__subclasses__():
         struct = fields.get_struct()
         if fields.get_code is not None:
-            translator_map[fields.get_code] = struct
+            fields_mappings[fields.get_code] = struct
         if fields.set_code is not None:
-            translator_map[fields.set_code] = struct
-    return translator_map
-
-
-@functools.cache
-def get_struct(get_code: MSP) -> Optional[DataclassStruct]:
-    return build_translator_map()[get_code]
-
-
-@functools.cache
-def set_struct(set_code: MSP) -> Optional[DataclassStruct]:
-    return build_translator_map()[set_code]
+            fields_mappings[fields.set_code] = struct
+    return fields_mappings

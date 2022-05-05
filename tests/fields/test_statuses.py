@@ -9,6 +9,7 @@ from bonfo.msp.fields.statuses import (
     ConfigurationProblemsFlags,
     FcVariant,
     FcVersion,
+    SensorAlignment,
     Status,
     StatusEx,
     TargetCapabilitiesFlags,
@@ -95,3 +96,13 @@ def test_board_info():
     )
     assert parsed == target
     assert BoardInfo.build(parsed) == target_bytes
+
+
+def test_sensor_alignment():
+    assert isinstance(SensorAlignment.get_struct(), DataclassStruct)
+    assert SensorAlignment.get_direction() == Direction.BOTH
+    target_bytes = minus_preamble(messages.sensor_alignment)
+    struct = SensorAlignment.get_struct()
+    parsed = struct.parse(target_bytes)
+    print(parsed)
+    # target = SensorAlignment()
