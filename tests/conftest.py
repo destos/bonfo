@@ -1,4 +1,5 @@
 import asyncio
+from functools import wraps
 
 import pytest
 from pytest_mock import MockerFixture, MockFixture
@@ -63,4 +64,14 @@ def mock_board(mocker: MockerFixture) -> MockFixture:
     board.send_receive = mocker.AsyncMock()
     board.get = mocker.AsyncMock()
     board.set = mocker.AsyncMock()
+
+    def amwrap(method):
+        @wraps(method)
+        async def async_pass(*args, **kwargs):
+            return await method(*args, **kwargs)
+
+        return async_pass
+
+    board.__gt__ = amwrap(board.get)
+    board.__lt__ = amwrap(board.set)
     return board

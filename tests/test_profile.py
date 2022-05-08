@@ -73,14 +73,14 @@ async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture
     apply_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
     profile.board.set.side_effect = [
-        # return from _set_pid_to_board call, not used currently
-        (None, None),
-        # return from _set_rate_to_board call, not used currently
-        (None, None),
+        # return from _send_pid_to_board call, not used currently
+        None,
+        # return from _send_rate_to_board call, not used currently
+        None,
     ]
     profile.board.get.side_effect = [
-        # return from _set_profiles_from_board call, from the "board"
-        (None, Container(pid_profile=2, rate_profile=4)),
+        # return from _set_profiles_from_board call, from the "board", partial of StatusEx
+        Container(pid_profile=2, rate_profile=4),
     ]
     assert profile.pid == 1
     assert profile.rate == 1
@@ -96,8 +96,8 @@ async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture
     # pid and rate not reverted
     assert profile.pid == 2
     assert profile.rate == 4
-    profile.board.set.assert_any_await(SelectPID(2))
     profile.board.set.assert_any_await(SelectRate(4))
+    profile.board.set.assert_any_await(SelectPID(2))
     profile.board.get.assert_any_await(StatusEx)
 
 
@@ -107,19 +107,19 @@ async def test_profile_manager_with_revert_on_exit(mock_board, mocker: MockerFix
     profile = Profile(board=mock_board)
     profile.board.set.side_effect = [
         # return from _set_pid_to_board call, not used currently
-        (None, None),
+        None,
         # return from _set_rate_to_board call, not used currently
-        (None, None),
+        None,
         # second return from _set_pid_to_board call, not used currently
-        (None, None),
+        None,
         # second return from _set_rate_to_board call, not used currently
-        (None, None),
+        None,
     ]
     profile.board.get.side_effect = [
         # return from _set_profiles_from_board call, inside apply_changes
-        (None, Container(pid_profile=2, rate_profile=4)),
+        Container(pid_profile=2, rate_profile=4),
         # return from _set_profiles_from_board second call, inside apply_changes
-        (None, Container(pid_profile=1, rate_profile=1)),
+        Container(pid_profile=1, rate_profile=1),
     ]
     assert profile.pid == 1
     assert profile.rate == 1
@@ -148,7 +148,7 @@ async def test_set_profiles_from_board(mock_board):
     profile = Profile(board=mock_board)
     mock_board.get.side_effect = [
         # emulate a partial status_ex message container
-        (None, Container(pid_profile=3, rate_profile=6)),
+        Container(pid_profile=3, rate_profile=6),
     ]
     assert profile.pid == 1
     assert profile.rate == 1
@@ -164,7 +164,7 @@ async def test_send_pid_to_board(mock_board):
     """Send the selected PID to the board, should not change local values."""
     profile = Profile(board=mock_board)
     profile.board.set.side_effect = [
-        (Container(message_type=">"), None),
+        None,
     ]
     assert profile.pid == 1
     assert await profile._send_pid_to_board(3) is True
@@ -178,7 +178,7 @@ async def test_send_rate_to_board(mock_board):
     """Send the selected rate to the board, should not change local values."""
     profile = Profile(board=mock_board)
     profile.board.set.side_effect = [
-        (None, None),
+        None,
     ]
     assert profile.rate == 1
     await profile._send_rate_to_board(3)

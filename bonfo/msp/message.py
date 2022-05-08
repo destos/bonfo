@@ -22,6 +22,7 @@ from bonfo.msp.structs import FrameStruct
 from .adapters import MessageType
 from .codes import frame_map
 from .expr import zero_none_len_
+
 # INFO: Make sure all fields are loaded before processing messages
 from .fields import *  # noqa
 

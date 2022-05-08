@@ -14,10 +14,10 @@ def test_mspversion_struct():
     with pytest.raises(StreamError):
         struct.parse(b"")
 
-    found = struct.parse(b"", msp=MSPVersions.V1_43)
+    found = struct.parse(b"", msp=MSPVersions.V1_43.value)
     assert found is None
 
-    found = struct.build(None, msp=MSPVersions.V1_43)
+    found = struct.build(None, msp=MSPVersions.V1_43.value)
     assert found == b""
 
 
@@ -32,7 +32,7 @@ def test_mspversion_struct_else_subcon():
 
     with pytest.raises(StreamError):
         # We error now if nothing is passed for parsing
-        struct.parse(b"", msp=MSPVersions.V1_43)
+        struct.parse(b"", msp=MSPVersions.V1_43.value)
 
-    found = struct.build(None, msp=MSPVersions.V1_43)
+    found = struct.build(None, msp=MSPVersions.V1_43.value)
     assert found == b"\x00\x00"

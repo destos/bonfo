@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 async def test_board_init_values(mock_open_serial_connection, mock_profile, mock_board_get) -> None:
     board = Board("/dev/tty-mock", initial_data=False, profile=mock_profile)
     await board.ready.wait()
-    mock_board_get.side_effect = [(None, None)]
+    mock_board_get.side_effect = [None]
     mock_open_serial_connection.assert_awaited_once_with(
         url="/dev/tty-mock",
         baudrate=115200,
@@ -45,7 +45,7 @@ async def test_board_init_values(mock_open_serial_connection, mock_profile, mock
 
 
 async def test_board_connect_manager(mock_open_serial_connection, mock_profile, mock_board_get, mock_board_set):
-    mock_board_get.side_effect = [(None, None)]
+    mock_board_get.side_effect = [None]
     async with Board("/dev/tty", initial_data=False).connect() as board:
         assert board.connected.is_set() is True
         assert board.ready.is_set() is True
@@ -63,13 +63,13 @@ async def test_board_initial_data_true(
 async def test_board_get_board_info(mock_open_serial_connection, mock_profile, mock_board_get, mocker: MockerFixture):
     cbi = mocker.patch("bonfo.board.CombinedBoardInfo")
     mock_board_get.side_effect = [
-        (None, "name"),
-        (None, "api"),
-        (None, "version"),
-        (None, "build_info"),
-        (None, "board_info"),
-        (None, "variant"),
-        (None, "uid"),
+        "name",
+        "api",
+        "version",
+        "build_info",
+        "board_info",
+        "variant",
+        "uid",
     ]
     board = Board("/dev/tty", initial_data=False, profile=mock_profile)
     # does not run on init

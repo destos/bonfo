@@ -39,10 +39,10 @@ class LenientChecksum(Checksum):
 
 
 def FrameStruct(frame_id: MSP):
+    """FrameStruct wraps a optional switch so as to not cause errors when no data is passed."""
     # load all fields to make sure sub classes are populated
     from .fields.base import build_fields_mapping
 
-    """FrameStruct wraps a optional switch so as to not cause errors when no data is passed."""
     return Optional(Switch(frame_id, build_fields_mapping()))
 
 

@@ -18,8 +18,7 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from bonfo.board import Board
 from bonfo.msp.codes import MSP
-from bonfo.msp.fields.pids import PidAdvanced
-from bonfo.msp.fields.statuses import Name, SensorAlignment
+from bonfo.msp.fields.boxes import BoxIds
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -127,14 +126,44 @@ async def test(ctx: BonfoContext):
         # status = await board.get(StatusEx)
         # print(status)
         # print(Name(name="bobby").build())
-        name = await (board < Name(name="robby"))
-        print(name)
-        name = await (board > Name)
-        sensor = await (board > SensorAlignment)
-        pid = await (board > PidAdvanced)
-        print(name)
-        print(sensor)
-        print(pid)
+        # name = await (board < Name(name="robby"))
+        # print(name)
+        # name = await (board > Name)
+        # sensor = await (board > SensorAlignment)
+        # att = await (board > BoxIds)
+        # pid = await (board > BoxNames)
+        fc = await (board > BoxIds)
+        print(fc)
+        # fc.features &= Features.ESC_SENSOR
+        # breakpoint()
+        # await (board < fc)
+        # fcsecond = await (board > FeatureConfig)
+        # print(name)
+        # print(att)
+        # print(sensor)
+        # print(fcres)
+        # print(fcsecond)
+        # while True:
+        #     att = await (board > Attitude)
+        #     print(att)
+        # await asyncio.sleep(0.01)
+        # print(pid)
+
+
+@cli.command()
+@bonfo_context
+@async_cmd
+async def msp_cli(ctx: BonfoContext):
+    """Drop into the MSP CLI"""
+    if ctx.board is None:
+        return click.echo("No port selected")
+    async with ctx.board.connect() as board:
+        board.writer.write(b"#")
+        while True:
+            line = await board.reader.readline()
+            print(line)
+            cmd = click.prompt("$")
+            board.writer.write(cmd)
 
 
 @cli.group("profiles")

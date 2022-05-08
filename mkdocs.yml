@@ -20,24 +20,27 @@ nav:
 theme:
   logo: assets/logo.svg
   palette:
-    - scheme: subsiv-light
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
-    - scheme: subsiv-dark
-      toggle:
-        icon: material/toggle-switch
-        name: Switch to light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: subsiv-light
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: subsiv-dark
-      toggle:
-        icon: material/toggle-switch
-        name: Switch to light mode
+    scheme: slate
+    #   primary: purple
+    #   accent: orange
+    # - scheme: subsiv-light
+    #   toggle:
+    #     icon: material/toggle-switch-off-outline
+    #     name: Switch to dark mode
+    # - scheme: subsiv-dark
+    #   toggle:
+    #     icon: material/toggle-switch
+    #     name: Switch to light mode
+    # - media: "(prefers-color-scheme: light)"
+    #   scheme: subsiv-light
+    #   toggle:
+    #     icon: material/toggle-switch-off-outline
+    #     name: Switch to dark mode
+    # - media: "(prefers-color-scheme: dark)"
+    #   scheme: subsiv-dark
+    #   toggle:
+    #     icon: material/toggle-switch
+    #     name: Switch to light mode
   name: material
   language: en
   features:

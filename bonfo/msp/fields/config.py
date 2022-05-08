@@ -3,8 +3,10 @@
 from dataclasses import dataclass
 from typing import Any
 
-from construct import Container, Int8ub, Int16ub, Union
-from construct_typed import csfield
+from construct import Container, Int8ub, Int16ub, Int32ub, Union
+from construct_typed import FlagsEnumBase, TFlagsEnum, csfield
+
+from bonfo.msp.fields.utils import BIT
 
 from ..adapters import RcFloat, SelectPIDProfile, SelectRateProfile
 from ..codes import MSP
@@ -81,10 +83,44 @@ class RcTuning(MSPFields, get_code=MSP.RC_TUNING, set_code=MSP.SET_RC_TUNING):
     rates_type: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_43))
 
 
+class Features(FlagsEnumBase):
+    RX_PPM = BIT(0)
+    INFLIGHT_ACC_CAL = BIT(2)
+    RX_SERIAL = BIT(3)
+    MOTOR_STOP = BIT(4)
+    SERVO_TILT = BIT(5)
+    SOFTSERIAL = BIT(6)
+    GPS = BIT(7)
+    RANGEFINDER = BIT(9)
+    TELEMETRY = BIT(10)
+    THREED = BIT(12)
+    RX_PARALLEL_PWM = BIT(13)
+    RX_MSP = BIT(14)
+    RSSI_ADC = BIT(15)
+    LED_STRIP = BIT(16)
+    DASHBOARD = BIT(17)
+    OSD = BIT(18)
+    CHANNEL_FORWARDING = BIT(20)
+    TRANSPONDER = BIT(21)
+    AIRMODE = BIT(22)
+    RX_SPI = BIT(25)
+    SOFTSPI = BIT(26)  # (removed)
+    ESC_SENSOR = BIT(27)
+    ANTI_GRAVITY = BIT(28)
+    DYNAMIC_FILTER = BIT(29)  # (removed)
+
+
+@dataclass
+class FeatureConfig(MSPFields, get_code=MSP.FEATURE_CONFIG, set_code=MSP.SET_FEATURE_CONFIG):
+    features: Features = csfield(TFlagsEnum(Int32ub, Features))
+
+
 __all__ = [
     "RxConfig",
     "RcTuning",
     "SelectSetting",
     "EepromWrite",
     "CopyProfile",
+    "Features",
+    "FeatureConfig",
 ]

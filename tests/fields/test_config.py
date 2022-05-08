@@ -34,6 +34,15 @@ def test_select_pid_build():
     assert SelectSetting.get_struct().build(data) == b"\x02"
 
 
+
+def test_feature_config_operations():
+    pass
+    # Test flag manipulation features?
+    # |
+    # &
+    # ^
+
+
 def xtest_rc_tuning_parse():
     # RcTuning(
     #     rc_rate=1.0,

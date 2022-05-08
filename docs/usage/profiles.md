@@ -36,7 +36,8 @@ async def change_profile_coro():
             print(f"During: {board.profile}")
             # > During: pid: 2 rate: 2
             # Use board here with profile modifying or retrieval commands.
-        # Using profile relevant commands outside the context manager scope should interact with the profiles set in our board.profile() call.
+        # Using profile relevant commands outside the context manager scope should
+        # interact with the profiles set in our board.profile() call.
         print(f"After: {board.profile}")
         # > After: pid: 2 rate: 2
 ```
@@ -54,7 +55,8 @@ async def change_profile_coro():
             print(f"During: {board.profile}")
             # > pid: 2 rate: 2
             # Use board here with profile modifying or retrieval commands.
-        # Using profile relevant commands outside the context manager scope should interact with the profiles before our board.profile() call.
+        # Using profile relevant commands outside the context manager scope should
+        # interact with the profiles before our board.profile() call.
         print(f"After: {board.profile}")
         # > pid: 1 rate: 1
         # Profiles were reverted on context manager exit.

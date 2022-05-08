@@ -29,3 +29,20 @@ rx_tuning2 = (
 )
 
 board_info = b"$M>J\x04S405\x00\x00\x027\tSTM32F405\nCLRACINGF4\x04CLRA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x02@\x1f\x00\x00\x00\x00\r"
+
+# MSP.ATTITUDE
+attitude_response = b"$M>\x06l`\x02\xaa\xff\x0e\x00S"
+
+# MSP.BOXNAMES
+box_names_response = (
+    b"$M>\xfft\x0b\x01ARM;ANGLE;HORIZON;HEADFREE;FAILSAFE;HEADADJ;BEEPER;"
+    b"OSD DISABLE SW;BLACKBOX;FPV ANGLE MIX;BLACKBOX ERASE (>30s);CAMERA CONTROL 1;"
+    b"CAMERA CONTROL 2;CAMERA CONTROL 3;FLIP OVER AFTER CRASH;PREARM;VTX PIT MODE;"
+    b"PARALYZE;USER1;ACRO TRAINER;DISABLE VTX CONTROL;LA"
+)
+
+# MSP.BOXIDS
+box_names_response = b'$M>\x16w\x00\x01\x02\x06\x1b\x07\r\x13\x1a\x1e\x1f !"#$\'-(/01U'
+
+# MSP.FEATURE_CONFIG
+feature_config_response = b'$M>\x04$\x00 D0t'

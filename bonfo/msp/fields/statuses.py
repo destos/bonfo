@@ -18,7 +18,7 @@ from construct import (
     PaddedString,
     this,
 )
-from construct_typed import FlagsEnumBase, TFlagsEnum, csfield
+from construct_typed import EnumBase, FlagsEnumBase, TEnum, TFlagsEnum, csfield
 from semver import VersionInfo
 
 from ..adapters import BTFLTimestamp, GitHash, Int8ubPlusOne, RawSingle
@@ -249,15 +249,32 @@ class GyroDetectionFlags(FlagsEnumBase):
     GYRO_IDENTICAL_MASK = BIT(7)  # All gyros are of the same hardware type
 
 
+class SensorAlignEnum(EnumBase):
+    """SensorAlignEnum mirror enum defintion from betaflight sensor_alignment.h."""
+
+    ALIGN_DEFAULT = 0  # driver-provided alignment
+    # the order of these 8 values also correlate to corresponding code in ALIGNMENT_TO_BITMASK.
+    # R, P, Y
+    CW0_DEG = 1  # 00,00,00
+    CW90_DEG = 2  # 00,00,01
+    CW180_DEG = 3  # 00,00,10
+    CW270_DEG = 4  # 00,00,11
+    CW0_DEG_FLIP = 5  # 00,10,00 # _FLIP = 2x90 degree PITCH rotations
+    CW90_DEG_FLIP = 6  # 00,10,01
+    CW180_DEG_FLIP = 7  # 00,10,10
+    CW270_DEG_FLIP = 8  # 00,10,11
+    ALIGN_CUSTOM = 9  # arbitrary sensor angles, e.g. for external sensors
+
+
 @dataclass
 class SensorAlignment(MSPFields, get_code=MSP.SENSOR_ALIGNMENT, set_code=MSP.SET_SENSOR_ALIGNMENT):
     # First byte may be ignored on set?, check msp.c
-    align_gyro: int = csfield(Int8ub)
-    align_acc: int = csfield(Int8ub)
-    align_mag: int = csfield(Int8ub)
+    align_gyro: SensorAlignEnum = csfield(TEnum(Int8ub, SensorAlignEnum))
+    align_acc: SensorAlignEnum = csfield(TEnum(Int8ub, SensorAlignEnum))
+    align_mag: SensorAlignEnum = csfield(TEnum(Int8ub, SensorAlignEnum))
     gyro_detection_flags: GyroDetectionFlags = csfield(
         MSPCutoff(TFlagsEnum(Int8ub, GyroDetectionFlags), MSPVersions.V1_41)
     )
-    gyro_to_use: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_41))
-    gyro_1_align: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_41))
-    gyro_2_align: int = csfield(MSPCutoff(Int8ub, MSPVersions.V1_41))
+    gyro_to_use: int = csfield(MSPCutoff(Int8ubPlusOne, MSPVersions.V1_41))
+    gyro_1_align: SensorAlignEnum = csfield(MSPCutoff(TEnum(Int8ub, SensorAlignEnum), MSPVersions.V1_41))
+    gyro_2_align: SensorAlignEnum = csfield(MSPCutoff(TEnum(Int8ub, SensorAlignEnum), MSPVersions.V1_41))

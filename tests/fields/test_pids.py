@@ -98,9 +98,9 @@ def test_pid_advanced_parse_and_build_non_destructive():
     """Pi aAdvanced generated struct should be non-destructive to bytescring."""
     data_bytes = minus_preamble(messages.pid_advanced)
     struct = PidAdvanced.get_struct()
-    data = struct.parse(data_bytes, msp=MSPVersions.V1_43)
+    data = struct.parse(data_bytes, msp=MSPVersions.V1_43.value)
     assert isinstance(data, PidAdvanced)
-    output_data_bytes = struct.build(data, msp=MSPVersions.V1_43)
+    output_data_bytes = struct.build(data, msp=MSPVersions.V1_43.value)
     assert data_bytes == output_data_bytes
 
 
