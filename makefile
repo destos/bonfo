@@ -33,3 +33,6 @@ docs:
 
 docs-serve:
 	${prun} mkdocs serve
+
+install:
+	poetry install -E doc -E test -E dev
