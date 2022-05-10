@@ -266,6 +266,10 @@ class SensorAlignEnum(EnumBase):
     ALIGN_CUSTOM = 9  # arbitrary sensor angles, e.g. for external sensors
 
 
+# Alignment mask results as part of masking?
+# Maybe the fallback struct resolver that resolve the mask first, if fails returns the enum?
+
+
 @dataclass
 class SensorAlignment(MSPFields, get_code=MSP.SENSOR_ALIGNMENT, set_code=MSP.SET_SENSOR_ALIGNMENT):
     # First byte may be ignored on set?, check msp.c

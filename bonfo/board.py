@@ -5,9 +5,10 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import AsyncIterator, Coroutine, List, Optional, Tuple, TypeVar, Union
+from typing import AsyncIterator, Coroutine, ForwardRef, List, Optional, Tuple, Union
 
 from construct import ConstError, Container, StreamError
+from construct_typed import DataclassStruct
 from semver import VersionInfo
 from serial_asyncio import open_serial_connection, serial
 
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["Board"]
 
 
-Fields = TypeVar("Fields")
+Fields = ForwardRef("Fields")
 
 
 @dataclass
@@ -209,6 +210,14 @@ class Board:
             return await self.receive_msg()
 
     async def get(self, fields: Fields) -> Optional[Fields]:
+        """Get data from the board with optional fields values
+
+        Args:
+            fields (Fields): The un-initialized or MSPFields instance with values.
+
+        Returns:
+            DataclassStruct: The data class instance related to the get request
+        """
         assert fields.get_direction() in [Direction.OUT, Direction.BOTH]
         assert fields.get_code is not None
 
@@ -226,10 +235,10 @@ class Board:
         """Sends a set message to the board with the values of the given fields.
 
         Args:
-            fields (Fields): The initialized or MSPFields instance with values.
+            fields (Fields): The un-initialized or MSPFields instance with values.
 
         Returns:
-            _type_: _description_
+            DataclassStruct: The data class instance related to the set request
         """
         assert fields.get_direction() in [Direction.IN, Direction.BOTH]
         assert fields.set_code is not None

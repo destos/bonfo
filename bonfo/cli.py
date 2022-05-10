@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from typing import Optional, Sequence
 
 import rich_click as click
+from click import Abort
+from construct import StreamError
 from loca import Loca
 from rich import print
 from serial.tools.list_ports import comports
@@ -154,16 +156,28 @@ async def test(ctx: BonfoContext):
 @bonfo_context
 @async_cmd
 async def msp_cli(ctx: BonfoContext):
-    """Drop into the MSP CLI"""
+    """Drop into the MSP CLI."""
     if ctx.board is None:
         return click.echo("No port selected")
     async with ctx.board.connect() as board:
         board.writer.write(b"#")
-        while True:
-            line = await board.reader.readline()
-            print(line)
-            cmd = click.prompt("$")
-            board.writer.write(cmd)
+
+        try:
+            while True:
+                cmd = click.prompt("$")
+                command = b"# " + cmd.encode("utf-8")
+                logger.debug(command)
+                board.writer.write(command)
+                line = await board.reader.readuntil()
+                print(line)
+        except (StreamError, Exception) as e:
+            logger.exception("Error in cli", exc_info=e)
+            logger.info("Exiting due to exception")
+        except (KeyboardInterrupt, Abort) as e:
+            logger.exception("Interrupted", exc_info=e)
+            logger.info("Exiting CLI")
+        finally:
+            board.writer.write(b"exit\r")
 
 
 @cli.group("profiles")

@@ -1,7 +1,9 @@
 import pytest
-from construct import ValidationError
+from construct import Debugger, ValidationError
 
-from bonfo.msp.fields.config import SelectPID, SelectRate, SelectSetting
+from bonfo.msp.fields.config import FeatureConfig, Features, SelectPID, SelectRate, SelectSetting
+
+from .. import messages
 
 
 def test_select_profile_out_of_range():
@@ -34,6 +36,12 @@ def test_select_pid_build():
     assert SelectSetting.get_struct().build(data) == b"\x02"
 
 
+def test_feature_config():
+    messages.feature_config_response
+    # struct = Debugger(FeatureConfig.get_struct())
+    struct = FeatureConfig.get_struct()
+    struct.parse(messages.feature_config_response)
+
 
 def test_feature_config_operations():
     pass
@@ -41,6 +49,10 @@ def test_feature_config_operations():
     # |
     # &
     # ^
+    rx_gps = sum([Features.RX_SERIAL, Features.GPS])
+    rx_gps = Features.RX_SERIAL - Features.GPS
+
+    print(rx_gps)
 
 
 def xtest_rc_tuning_parse():

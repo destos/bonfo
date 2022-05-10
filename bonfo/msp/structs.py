@@ -43,7 +43,7 @@ def FrameStruct(frame_id: MSP):
     # load all fields to make sure sub classes are populated
     from .fields.base import build_fields_mapping
 
-    return Optional(Switch(frame_id, build_fields_mapping()))
+    return Optional(Switch(frame_id, build_fields_mapping()))  # type:ignore
 
 
 # def SpecifiedString

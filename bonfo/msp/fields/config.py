@@ -109,6 +109,21 @@ class Features(FlagsEnumBase):
     ANTI_GRAVITY = BIT(28)
     DYNAMIC_FILTER = BIT(29)  # (removed)
 
+    # def __add__(self, other: int) -> int:
+    #     if not isinstance(other, (self.__class__, int)):
+    #         return NotImplemented
+    #     return self.__class__(self.__class__(other)._value_ & ~self)
+
+    # def __add__(self, other: int) -> int:
+    #     return None
+    #     # return self.__class__(other & (~self))
+    #     return other & (~self)
+
+    # def __add__(self, other):
+    #     if not isinstance(other, (self.__class__, int)):
+    #         return NotImplemented
+    #     return self.__class__(~self._value_ & self.__class__(other)._value_)
+
 
 @dataclass
 class FeatureConfig(MSPFields, get_code=MSP.FEATURE_CONFIG, set_code=MSP.SET_FEATURE_CONFIG):
