@@ -1197,8 +1197,8 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 
 [extras]
 dev = ["tox", "pre-commit", "virtualenv", "pip", "twine", "toml", "black", "isort", "mypy", "bump2version", "autoflake8", "pytest-watcher", "flake8", "flake8-docstrings"]
-doc = ["mkdocs", "mkdocs-material", "mkdocs-autorefs", "mkdocs-include-markdown-plugin", "mkdocs-git-revision-date-plugin", "mkdocstrings"]
 test = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-mock", "types-mock"]
+doc = ["mkdocs", "mkdocs-click", "mkdocs-material", "mkdocs-autorefs", "mkdocs-include-markdown-plugin", "mkdocs-git-revision-date-plugin", "mkdocstrings"]
 
 [metadata]
 lock-version = "1.1"

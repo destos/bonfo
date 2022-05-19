@@ -30,13 +30,6 @@ def mock_open_serial_connection(module_mocker, mocker):
 
 
 @pytest.fixture(scope="function")
-def mock_profile(module_mocker, mocker):
-    profile = module_mocker.patch("bonfo.profile.Profile")
-    profile._check_connection = mocker.AsyncMock()
-    return profile
-
-
-@pytest.fixture(scope="function")
 def mock_board_get(module_mocker):
     return module_mocker.patch("bonfo.board.Board.get")
 
@@ -57,6 +50,7 @@ def mock_profile(module_mocker, mocker: MockerFixture):
 
 @pytest.fixture(scope="function")
 def mock_board(mocker: MockerFixture) -> MockFixture:
+    mocker.AsyncMock
     board = mocker.Mock().stub()
     board.ready = asyncio.Event()
     # Always ready
@@ -65,13 +59,6 @@ def mock_board(mocker: MockerFixture) -> MockFixture:
     board.get = mocker.AsyncMock()
     board.set = mocker.AsyncMock()
 
-    def amwrap(method):
-        @wraps(method)
-        async def async_pass(*args, **kwargs):
-            return await method(*args, **kwargs)
-
-        return async_pass
-
-    board.__gt__ = amwrap(board.get)
-    board.__lt__ = amwrap(board.set)
+    board.__gt__ = board.get
+    board.__lt__ = board.set
     return board

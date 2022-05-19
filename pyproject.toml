@@ -98,6 +98,7 @@ dev = [
 
 doc = [
     "mkdocs",
+    "mkdocs-click",
     "mkdocs-material",
     "mkdocs-material-extension",
     "mkdocs-autorefs",

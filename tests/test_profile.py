@@ -1,6 +1,7 @@
 from construct import Container
 from pytest_mock import MockerFixture
 
+from bonfo.board import Board
 from bonfo.msp.fields.config import SelectPID, SelectRate
 from bonfo.msp.fields.statuses import StatusEx
 from bonfo.profile import Profile
@@ -68,7 +69,7 @@ async def test_profile_manager_with_no_args(mock_board, mocker: MockerFixture) -
     profile.board.send_receive.assert_not_awaited()
 
 
-async def test_profile_manager_with_selections(mock_board, mocker: MockerFixture) -> None:
+async def test_profile_manager_with_selections(mock_board: Board, mocker: MockerFixture) -> None:
     """Side effects of providing a different pid and rate in the async profile manager."""
     apply_changes_spy = mocker.spy(Profile, "apply_changes")
     profile = Profile(board=mock_board)
