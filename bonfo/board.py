@@ -5,10 +5,9 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import AsyncIterator, Coroutine, ForwardRef, List, Optional, Tuple, Union
+from typing import AsyncIterator, Coroutine, Iterable, Optional
 
-from construct import ConstError, Container, StreamError
-from construct_typed import DataclassStruct
+from construct import ConstError, StreamError
 from semver import VersionInfo
 from serial_asyncio import open_serial_connection, serial
 
@@ -28,9 +27,6 @@ logger = logging.getLogger(__name__)
 __all__ = ["Board"]
 
 
-Fields = ForwardRef("Fields")
-
-
 @dataclass
 class Board:
     """Board is an interface for , configuration retrieval and saving."""
@@ -41,9 +37,8 @@ class Board:
     loop: Optional[asyncio.AbstractEventLoop] = None
     profile: Optional[Profile] = None
 
-    _ready_tasks: List[Coroutine] = field(default_factory=lambda: list(), init=False, repr=False)
+    _ready_tasks: Iterable[Coroutine] = field(default_factory=lambda: list(), init=False, repr=False)
 
-    # TODO: allow to pass init profiles to Profile from board init
     def __post_init__(self) -> None:
         # board events
         self.connected = asyncio.Event()
@@ -76,7 +71,7 @@ class Board:
         self.loop.create_task(self._run_ready_tasks())
 
     def _ready_task(self, coro: Coroutine) -> None:
-        self._ready_tasks.append(coro)
+        self._ready_tasks.append(coro)  # type:ignore
 
     async def _run_ready_tasks(self) -> None:
         await asyncio.gather(*self._ready_tasks)
@@ -165,7 +160,7 @@ class Board:
             finally:
                 logger.debug("sent: %s %s", code, buff)
 
-    async def receive_msg(self) -> Tuple[Preamble, Optional[Fields]]:
+    async def receive_msg(self):
         """Read the current line from the serial port and parse the MSP message.
 
         Parse the message and return a construct Container.
@@ -203,14 +198,14 @@ class Board:
 
             return preamble, None
 
-    async def send_receive(self, code: MSP, fields=None) -> Union[None, Container]:
+    async def send_receive(self, code: MSP, fields):
         # TODO: Use an asyncio Queue to make sure the send/receive happens consecutively?
         async with self.message_lock:
             await self.send_msg(code, fields=fields)
             return await self.receive_msg()
 
-    async def get(self, fields: Fields) -> Optional[Fields]:
-        """Get data from the board with optional fields values
+    async def get(self, fields):
+        """Get data from the board with optional fields values.
 
         Args:
             fields (Fields): The un-initialized or MSPFields instance with values.
@@ -231,7 +226,7 @@ class Board:
             # TODO: raise error if preamble received is an error
             return data
 
-    async def set(self, fields: Fields) -> Optional[Fields]:
+    async def set(self, fields):
         """Sends a set message to the board with the values of the given fields.
 
         Args:
@@ -253,13 +248,13 @@ class Board:
             # TODO: raise error if preamble received is an error
             return data
 
-    async def __gt__(self, other: Fields) -> Optional[Fields]:
+    async def __gt__(self, other):
         """Get data from the board with the > operator."""
         if isinstance(other, MSPFields) or issubclass(other, MSPFields):
             return await self.get(other)
         raise BonfoOperatorException("Not a compatible > type")
 
-    async def __lt__(self, other: Fields) -> Optional[Fields]:
+    async def __lt__(self, other):
         """Set data on the board with the < operator."""
         if isinstance(other, MSPFields) or issubclass(other, MSPFields):
             return await self.set(other)

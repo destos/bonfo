@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
 from construct import Array, Default, Int8ub, Int16ub, Int32ub
 from construct import Optional as CSOptional
@@ -18,7 +18,7 @@ PID_COUNT = 5
 
 @dataclass
 class PidCoefficients(MSPFields, get_code=MSP.PID):
-    pids: list[Any] = csfield(
+    pids: Iterable[Any] = csfield(
         Array(
             PID_COUNT,
             Struct(
