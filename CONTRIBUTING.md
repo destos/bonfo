@@ -1,5 +1,3 @@
-# Contributing
-
 Contributions are welcome, and they are greatly appreciated! Every little bit
 helps, and credit will always be given.
 
@@ -29,8 +27,8 @@ and "help wanted" is open to whoever wants to implement it.
 
 ### Write Documentation
 
-Bonfo configuration management could always use more documentation, whether as part of the
-official Bonfo configuration management docs, in docstrings, or even on the web in blog posts,
+Bonfo could always use more documentation, whether as part of the
+official Bonfo docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 ### Submit Feedback

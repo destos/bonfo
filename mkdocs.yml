@@ -1,28 +1,57 @@
-site_name: Bonfo configuration management
+site_name: Bonfo - drone configuration management
 site_url: https://destos.github.io/bonfo
 repo_url: https://github.com/destos/bonfo
 repo_name: destos/bonfo
+edit_uri: edit/main/docs/
 #strict: true
 nav:
   - Home: index.md
-  - Ideas: ideas.md
   - Installation: installation.md
-  - Usage: usage.md
-  - Modules: api.md
+  - Ideas: ideas.md
+  - Usage:
+    - usage/index.md
+    - Board: usage/board.md
+    - Profiles: usage/profiles.md
+    - Sending & Receiving Messages: usage/messages.md
+    - CLI: usage/cli.md
+  - Modules: modules.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 theme:
+  logo: assets/logo.svg
+  palette:
+    scheme: slate
+    #   primary: purple
+    #   accent: orange
+    # - scheme: subsiv-light
+    #   toggle:
+    #     icon: material/toggle-switch-off-outline
+    #     name: Switch to dark mode
+    # - scheme: subsiv-dark
+    #   toggle:
+    #     icon: material/toggle-switch
+    #     name: Switch to light mode
+    # - media: "(prefers-color-scheme: light)"
+    #   scheme: subsiv-light
+    #   toggle:
+    #     icon: material/toggle-switch-off-outline
+    #     name: Switch to dark mode
+    # - media: "(prefers-color-scheme: dark)"
+    #   scheme: subsiv-dark
+    #   toggle:
+    #     icon: material/toggle-switch
+    #     name: Switch to light mode
   name: material
   language: en
-  #logo: assets/logo.png
-  palette:
-    scheme: preference
-    primary: indigo
-    accent: indigo
   features:
+    - header.autohide
     - navigation.indexes
+    - navigation.expanded
     - navigation.instant
+    - navigation.tabs
     - navigation.tabs.sticky
+    - navigation.sections
+    - toc.integrate
 markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
@@ -33,11 +62,14 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.tabbed
   - attr_list
-  - pymdownx.arithmatex:
-      generic: true
+  - md_in_html
+  # - pymdownx.arithmatex:
+  #     generic: true
   - pymdownx.highlight:
       linenums: false
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.inlinehilite
   - pymdownx.details
   - admonition
@@ -46,8 +78,11 @@ markdown_extensions:
       permalink: true
       slugify: !!python/name:pymdownx.slugs.uslugify
   - meta
+  - mkdocs-click
 plugins:
   - include-markdown
+  - git-revision-date:
+      enabled_if_env: CI
   - search:
       lang: en
   - mkdocstrings:
@@ -55,22 +90,26 @@ plugins:
         - bonfo
 extra:
   social:
-    - icon: fontawesome/brands/twitter
-      # replace with your own tweet link below
-      link: https://github.com/waynerv/cookiecutter-pypackage
-      name: Tweet
-    - icon: fontawesome/brands/facebook
-      # replace with your own facebook link below
-      link: https://github.com/waynerv/cookiecutter-pypackage
-      name: Facebook
+    # - icon: fontawesome/brands/twitter
+    #   # replace with your own tweet link below
+    #   link: https://github.com/waynerv/cookiecutter-pypackage
+    #   name: Tweet
+    # - icon: fontawesome/brands/facebook
+    #   # replace with your own facebook link below
+    #   link: https://github.com/waynerv/cookiecutter-pypackage
+    #   name: Facebook
     - icon: fontawesome/brands/github
       link: https://github.com/destos/bonfo
       name: Github
     - icon: material/email
-      link: "mailto:patrick@forringer.com"
+      link: "mailto:patrick@forringer.com?subject=Bonfo"
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id
+extra_css:
+  - stylesheets/extra.css
 # uncomment the following and put your google tracking id below to enable GA
 #google_analytics:
   #- UA-xxx
   #- auto
+
+# TODO: add tags to pages and tags index
