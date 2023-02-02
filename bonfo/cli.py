@@ -1,23 +1,26 @@
 """Console script for bonfo."""
 
+import asyncio
 import atexit
+import functools
 import logging
 import os
 import shelve
 import sys
 from dataclasses import dataclass
-from time import sleep
 from typing import Optional, Sequence
 
 import rich_click as click
-from construct import ChecksumError, ConstError
+from click import Abort
+from construct import StreamError
 from loca import Loca
 from rich import print
 from serial.tools.list_ports import comports
 from serial.tools.list_ports_common import ListPortInfo
 
-from bonfo.msp.board import Board
+from bonfo.board import Board
 from bonfo.msp.codes import MSP
+from bonfo.msp.fields.boxes import BoxIds
 
 click.rich_click.USE_MARKDOWN = True
 click.rich_click.SHOW_ARGUMENTS = True
@@ -30,6 +33,7 @@ logging.basicConfig(
 )
 
 # config things
+# TODO: use datawizard instead, and init the board/port via property.
 try:
     loca = Loca()
     path = loca.user.state.config()
@@ -42,7 +46,18 @@ except FileExistsError:
     pass
 finally:
     logger.debug("State file: %s", state_file)
-    state_store = shelve.open(state_file, flag="c")
+    try:
+        state_store = shelve.open(state_file, flag="c")
+    except Exception as e:
+        logger.exception("Error loading state", exc_info=e)
+
+
+def async_cmd(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(func(*args, **kwargs))
+
+    return wrapper
 
 
 @dataclass
@@ -73,17 +88,17 @@ bonfo_context = click.make_pass_decorator(BonfoContext)
 @click.group("bonfo")
 @click.pass_context
 def cli(ctx):
-    """Bonfo is configuration management for flight controllers running **MSP v1** compatible flight controllers.
+    """Bonfo is configuration management for flight controllers running **MSP v1**.
 
     > Supported flight controller software:
-    >  - BetaFlight
+    >  - BetaFlight(>=3.4)
     """
     ctx.obj = BonfoContext(port=state_store.get("port", None))
 
 
 @cli.command()
 @bonfo_context
-def check_context(ctx):
+def check_context(ctx: BonfoContext):
     """Output current context values."""
     print(ctx.board)
     print(ctx.port)
@@ -95,29 +110,144 @@ def connect(ctx: BonfoContext):
     """Connect to the FC board."""
     if ctx.board is None:
         return click.echo("No port selected")
-    with ctx.board as board:
+    with ctx.board.connect() as board:
         click.echo(board.send_msg(MSP.API_VERSION))
 
 
 @cli.command()
 @bonfo_context
-def update(ctx: BonfoContext):
+@async_cmd
+async def test(ctx: BonfoContext):
+    """Just me, testing things."""
     if ctx.board is None:
         return click.echo("No port selected")
-    with ctx.board as board:
-        while True:
-            sleep(1)
-            click.echo(board.send_msg(MSP.STATUS_EX))
-            try:
-                click.echo(board.receive_msg())
-            except (ChecksumError, ConstError) as e:
-                logger.exception("error", exc_info=e)
+    async with ctx.board.connect() as board:
+        pass
+        # print(board.info)
+        # print(str(board.profile))
+        # status = await board.get(StatusEx)
+        # print(status)
+        # print(Name(name="bobby").build())
+        # name = await (board < Name(name="robby"))
+        # print(name)
+        # name = await (board > Name)
+        # sensor = await (board > SensorAlignment)
+        # att = await (board > BoxIds)
+        # pid = await (board > BoxNames)
+        fc = await (board > BoxIds)
+        print(fc)
+        # fc.features &= Features.ESC_SENSOR
+        # breakpoint()
+        # await (board < fc)
+        # fcsecond = await (board > FeatureConfig)
+        # print(name)
+        # print(att)
+        # print(sensor)
+        # print(fcres)
+        # print(fcsecond)
+        # while True:
+        #     att = await (board > Attitude)
+        #     print(att)
+        # await asyncio.sleep(0.01)
+        # print(pid)
 
 
 @cli.command()
 @bonfo_context
-@click.option('-s', '--include-links', is_flag=True, help='include entries that are symlinks to real devices')
-def set_port(cxt, include_links, err=True):
+@async_cmd
+async def msp_cli(ctx: BonfoContext):
+    """Drop into the MSP CLI."""
+    if ctx.board is None:
+        return click.echo("No port selected")
+    async with ctx.board.connect() as board:
+        board.writer.write(b"#")
+
+        try:
+            while True:
+                cmd = click.prompt("$")
+                command = b"# " + cmd.encode("utf-8")
+                logger.debug(command)
+                board.writer.write(command)
+                line = await board.reader.readuntil()
+                print(line)
+        except (StreamError, Exception) as e:
+            logger.exception("Error in cli", exc_info=e)
+            logger.info("Exiting due to exception")
+        except (KeyboardInterrupt, Abort) as e:
+            logger.exception("Interrupted", exc_info=e)
+            logger.info("Exiting CLI")
+        finally:
+            board.writer.write(b"exit\r")
+
+
+@cli.group("profiles")
+@bonfo_context
+def profiles(ctx: BonfoContext):
+    pass
+
+
+@profiles.command()
+@bonfo_context
+@async_cmd
+async def get(ctx: BonfoContext):
+    """Get the PID and rate profile of the flight controller."""
+    if ctx.board is None:
+        return click.echo("No port selected")
+    async with ctx.board.connect() as board:
+        click.echo(f"{board.profile}")
+
+
+@profiles.command()
+@bonfo_context
+@click.option("-p", "--pid", type=int)
+@click.option("-r", "--rate", type=int)
+@async_cmd
+async def set(ctx: BonfoContext, pid, rate):
+    """Set the PID or rate profile of the flight controller."""
+    if ctx.board is None:
+        return click.echo("No port selected")
+    async with ctx.board.connect() as board:
+        click.echo(f"Before: {board.profile}")
+        if pid is not None:
+            board.profile.pid = pid
+        if rate is not None:
+            board.profile.rate = rate
+        await board.profile.apply_changes()
+        click.echo(f"After: {board.profile}")
+
+
+@cli.group("config")
+@bonfo_context
+def config(ctx: BonfoContext):
+    """Manage and apply configuration files."""
+    pass
+
+
+@config.command()
+@bonfo_context
+@click.option("-c", "--check", type=bool)
+@click.argument("file", type=click.File("r"))
+def apply(ctx: BonfoContext, check, file):
+    """Apply passed configuration."""
+    pass
+    # click.echo(BoardConf.from_yaml(file.read()))
+
+
+@config.command()
+@bonfo_context
+@click.argument("file", type=click.Path(dir_okay=False))
+def create(ctx: BonfoContext, file):
+    pass
+    # BoardConf(
+    #     pid_profiles={1: PidTranslator(test_one=123, test2=123), 2: PidTranslator(test_one=3, test2=4)},
+    #     # rates=[RateTranslator(profile=1, yaw=123)]
+    # ).to_yaml_file(file)
+
+
+@cli.command()
+@bonfo_context
+@click.option("-s", "--include-links", is_flag=True, help="include entries that are symlinks to real devices")
+def set_port(cxt: BonfoContext, include_links, err=True):
     """Set the default port to use during this session."""
     # TODO: let user know they are changing the port from the context if it changes
     # or show current as well

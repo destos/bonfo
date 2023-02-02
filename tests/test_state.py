@@ -5,4 +5,3 @@ def xtest_config_serialization():
     For profiles, maybe we know which profile we're operating under and what those fields are
     MSP_COPY_PROFILE could be used to duplicate a profile via a command and then fill it out and save the yaml?
     """
-    pass

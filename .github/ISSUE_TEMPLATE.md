@@ -1,4 +1,4 @@
-* Bonfo configuration management version:
+* Bonfo version:
 * Python version:
 * Operating System:
 
